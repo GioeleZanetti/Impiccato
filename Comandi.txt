@@ -1,9 +1,0 @@
-git config --global http.proxy http://proxyUsername:proxyPassword@proxy.server.com:port
-
-git clone <Link> <cartella>
-
-git add <Files>
-
-git commit -m "Messaggio importante"
-
-git push
