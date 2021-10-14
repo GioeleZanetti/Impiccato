@@ -1,9 +1,9 @@
-package server;
-
 /**
- *
- * @author gioele.zanetti
+ * @version 7 set 2021
+ * @author Gioele Zanetti
  */
+
+package server;
 
 import java.io.IOException;
 import java.net.ServerSocket;

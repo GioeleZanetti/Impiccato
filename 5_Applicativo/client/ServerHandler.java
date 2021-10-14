@@ -1,9 +1,10 @@
+/**
+ * @version 7 set 2021
+ * @author Gioele Zanetti
+ */
+
 package client;
 
-/**
- *
- * @author gioele.zanetti
- */
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.net.Socket;
@@ -27,6 +28,7 @@ public class ServerHandler implements  Runnable{
             while ((current = in.read()) != -1) {
                 byte[] packet = new byte[current];
                 in.read(packet, 0, current);
+                c.elaborateResponse(packet);
             }
         }catch(IOException e){
             
@@ -34,4 +36,3 @@ public class ServerHandler implements  Runnable{
     }
 
 }
-
