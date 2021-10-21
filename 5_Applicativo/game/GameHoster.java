@@ -33,6 +33,10 @@ public class GameHoster {
     public static void addGame(String gameName){
         games.put(gameName, new Game(gameName));
     }
+    
+    public static void removeGame(String gameName){
+        games.remove(gameName);
+    }
 
     public static Game getGame(String gameName)  {
         return games.get(gameName);
@@ -50,10 +54,5 @@ public class GameHoster {
         return games.containsKey(name) ?
             games.get(name).getPlayers():
             null;
-    }
-    
-    
-    public static void main(String[] args) {
-        System.out.println(generateRandomGameName());
     }
 }

@@ -33,6 +33,8 @@ public class ProtocolCodes {
     public static final int PLAYER_LOST_TURN = 32;
     public static final int NOTIFY_TURN_LOST = 33;
     public static final int ADD_ERROR = 34;
+    public static final int END_TURN = 35;
+    public static final int DELETE_GAME = 36;
     
     public static byte[] getDataFromPacket(byte[] packet){
         byte[] data = new byte[packet.length - 1];
@@ -252,6 +254,21 @@ public class ProtocolCodes {
         packet[1] = ADD_ERROR;
         packet = addDataToPacket(packet, gameName.getBytes());
         packet = addDataToPacket(packet, userName.getBytes());
+        return packet;
+    }
+    
+    public static byte[] buildEndTurnPacket(){
+        byte[] packet = new byte[2];
+        packet[0] = (byte)(packet.length - 1);
+        packet[1] = END_TURN;
+        return packet;
+    }
+    
+    public static byte[] buildDeleteGamePacket(String gameName){
+        byte[] packet = new byte[2];
+        packet[0] = (byte)(packet.length - 1);
+        packet[1] = DELETE_GAME;
+        packet = addDataToPacket(packet, gameName.getBytes());
         return packet;
     }
     

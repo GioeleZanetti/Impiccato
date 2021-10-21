@@ -30,11 +30,11 @@ public class ClientHandler implements Runnable{
         in = new DataInputStream(client.getInputStream());
     }
     
-    public void setGameToken(String gameToken){
+    private void setGameToken(String gameToken){
         this.gameToken = gameToken;
     }
     
-    public String getGameToken(){
+    private String getGameToken(){
         return gameToken;
     }
     
@@ -57,7 +57,154 @@ public class ClientHandler implements Runnable{
     }
 
     private void elaborateRequest(byte[] request) throws IOException {
+        switch (request[0]) {
+            case ProtocolCodes.CREATE_GAME:
+                createGame(request);
+                break;
+            case ProtocolCodes.JOIN_GAME:
+                joinGame(request);
+                break;  
+            case ProtocolCodes.GET_PLAYER_LIST:
+                getPlayerList(request);
+                break;
+            case ProtocolCodes.LEAVE_GAME:
+                leaveGame(request);
+                break; 
+            case ProtocolCodes.START_GAME:
+                startGame(request);
+                break;
+            case ProtocolCodes.SEND_LETTER:
+                sendLetter(request);
+                break;
+            case ProtocolCodes.REQUEST_GAME_WORD:
+                requestGameWord(request);
+                break;
+            case ProtocolCodes.PLAYER_WON_TURN:
+            case ProtocolCodes.PLAYER_LOST_TURN:
+                playerLostOrWonTurn(request);
+                break;
+            case ProtocolCodes.ADD_ERROR:
+                addError(request);
+                break;
+            case ProtocolCodes.DELETE_GAME:
+                deleteGame(request);
+                break;
+            default:
+                break;
+        }
+    }
+    
+    private void deleteGame(byte[] request){
+        String requestGameToken = new String(readFromTo(ProtocolCodes.getDataFromPacket(request), 0, 8));
+        var game = GameHoster.getGame(requestGameToken);
+        if(game != null){
+            GameHoster.removeGame(requestGameToken);
+            System.out.println("Removing " + requestGameToken);
+        }
+    }
 
+    private void addError(byte[] request) {
+        String requestGameToken = new String(readFromTo(ProtocolCodes.getDataFromPacket(request), 0, 8));
+        String playerName = new String(readFromTo(ProtocolCodes.getDataFromPacket(request), 8, request.length - 1));
+        var game = GameHoster.getGame(requestGameToken);
+        if(game != null){
+            game.getPlayer(playerName).addError();
+        }
+    }
+
+    private void playerLostOrWonTurn(byte[] request) throws IOException {
+        String requestGameToken = new String(readFromTo(ProtocolCodes.getDataFromPacket(request), 0, 8));
+        String playerName = new String(readFromTo(ProtocolCodes.getDataFromPacket(request), 8, request.length - 1));
+        var game = GameHoster.getGame(requestGameToken);
+        if(game != null){
+            if(game.getPlayer(playerName) != null){
+                game.getPlayer(playerName).setHasFinished(true);
+                game.addPointsToPlayer(playerName);
+                if(request[0] == ProtocolCodes.PLAYER_WON_TURN)
+                    broadcastToGame(requestGameToken, ProtocolCodes.buildNotifyPlayerWonTurnPacket(playerName));
+                else
+                    broadcastToGame(requestGameToken, ProtocolCodes.buildNotifyPlayerLostTurnPacket(playerName));
+            }
+            if(game.turnEnd()){
+                game.nextTurn();
+                broadcastToGame(requestGameToken, ProtocolCodes.buildEndTurnPacket());
+            }else if(game.gameEnd()){
+                broadcastToGame(requestGameToken, ProtocolCodes.buildEndGamePacket());
+            }
+        }
+    }
+
+    private void requestGameWord(byte[] request) throws IOException {
+        String requestGameToken = new String(ProtocolCodes.getDataFromPacket(request));
+        var game = GameHoster.getGame(requestGameToken);
+        if(game != null){
+            out.write(ProtocolCodes.buildGameWordPacket(game.getWord()));
+        }
+    }
+
+    private void sendLetter(byte[] request) throws IOException {
+        String requestGameToken = new String(readFromTo(ProtocolCodes.getDataFromPacket(request), 0, 8));
+        var game = GameHoster.getGame(requestGameToken);
+        if(game != null){
+            byte letter = readFromTo(ProtocolCodes.getDataFromPacket(request), 8, request.length - 1)[0];
+            byte[] index = game.isLetterRight(letter);
+            out.write(ProtocolCodes.buildLetterIndexesPacket(index, letter));
+        }
+    }
+
+    private void startGame(byte[] request) throws IOException {
+        String requestGameToken = new String(readFromTo(ProtocolCodes.getDataFromPacket(request), 0, 8));
+        String userName = new String(readFromTo(ProtocolCodes.getDataFromPacket(request), 8, request.length - 1));
+        if(GameHoster.getGame(requestGameToken).getAdmin().equals(userName)){
+            GameHoster.getGame(requestGameToken).startGame();
+            broadcastToGame(requestGameToken, ProtocolCodes.buildGameStartedSuccessfullyPacket());
+        }else{
+            out.write(ProtocolCodes.buildGameStartedUnsuccessfullyPacket());
+        }
+    }
+
+    private void leaveGame(byte[] request) throws IOException {
+        String requestGameToken = new String(readFromTo(ProtocolCodes.getDataFromPacket(request), 0, 8));
+        var game = GameHoster.getGame(requestGameToken);
+        if (game != null) {
+            game.removePlayer(new String(readFromTo(ProtocolCodes.getDataFromPacket(request), 8, request.length - 1)));
+            out.write(ProtocolCodes.buildGameLeavedSuccessfullyPacket());
+        }else {
+            out.write(ProtocolCodes.buildGameLeavedUnsuccessfullyPacket());
+        }
+    }
+
+    private void getPlayerList(byte[] request) throws IOException {
+        String gameName = new String(ProtocolCodes.getDataFromPacket(request));
+        out.write(ProtocolCodes.buildPlayerListReturnedPacket(GameHoster.getGameList(gameName)));
+    }
+
+    private void joinGame(byte[] request) throws IOException {
+        String requestGameToken = new String(readFromTo(ProtocolCodes.getDataFromPacket(request), 0, 8));
+        String userName = new String(readFromTo(ProtocolCodes.getDataFromPacket(request), 8, request.length - 1));
+        var game = GameHoster.getGame(requestGameToken);
+        if (game != null) {
+            if(!game.containsName(userName)){
+                setGameToken(requestGameToken);
+                game.addPlayer(userName);
+                out.write(ProtocolCodes.buildGameJoinedSuccessfullyPacket(requestGameToken));
+            }else {
+                out.write(ProtocolCodes.buildUsernameAlreadyUsedPacket());
+            }
+        }else {
+            out.write(ProtocolCodes.buildGameJoinedUnsuccessfullyPacket());
+        }
+    }
+
+    private void createGame(byte[] request) throws IOException {
+        String requestGameToken = GameHoster.generateRandomGameName();
+        GameHoster.addGame(requestGameToken);
+        String userName = new String(ProtocolCodes.getDataFromPacket(request));
+        GameHoster.getGame(requestGameToken).addPlayer(userName);
+        GameHoster.getGame(requestGameToken).setAdmin(userName);
+        setGameToken(requestGameToken);
+        out.write(ProtocolCodes.buildGameCreatedSuccessfullyPacket(requestGameToken));
+        System.out.println("Creating " + requestGameToken);
     }
     
     private byte[] readFromTo(byte[] packet, int start, int end){
@@ -74,9 +221,5 @@ public class ClientHandler implements Runnable{
                 c.out.write(ProtocolCodes.buildBroadcastMessagePacket(packet));
             }
         }
-    }
-    
-    public static void main(String[] args) {
-
     }
 }

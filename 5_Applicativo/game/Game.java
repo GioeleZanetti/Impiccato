@@ -16,6 +16,8 @@ public class Game {
     private String admin;
     private int lengthInSeconds;
     private long beginning;
+    private int turn;
+    private final int TURN_NUMBER;
 
     public Game(String gameName) {
         this.name = gameName;
@@ -25,6 +27,8 @@ public class Game {
         this.admin = "";
         this.lengthInSeconds = 60;
         this.beginning = 0;
+        this.turn = 0;
+        this.TURN_NUMBER = 2;
     }
     
     public void startGame(){
@@ -82,12 +86,56 @@ public class Game {
         return false;
     }
     
-    public boolean gameEnd(){
-        boolean gameEnd = true;
-        for(int i=0;i<players.size();i++){
-            gameEnd = gameEnd && players.get(i).hasFinished();
+    public boolean turnEnd(){
+        if(turn < TURN_NUMBER - 1){
+            boolean turnEnd = true;
+            for(int i=0;i<players.size();i++){
+                turnEnd = turnEnd && players.get(i).hasFinished();
+            }
+            return turnEnd;
         }
-        return gameEnd;
+        return false;
+    }
+    
+    public boolean gameEnd(){
+        if(turn == TURN_NUMBER - 1){
+            boolean gameEnd = true;
+            for(int i=0;i<players.size();i++){
+                gameEnd = gameEnd && players.get(i).hasFinished();
+            }
+            return gameEnd;
+        }
+        return false;
+    }
+    
+    public void nextTurn(){
+        this.turn++;
+        this.word = Word.getRandomWord();
+        this.beginning = System.currentTimeMillis();
+        setPlayerErrorsToZero();
+        setPlayerHasNotFinished();
+    }
+    
+    public void setPlayerErrorsToZero(){
+        for(Player p : players){
+            p.setErrorsToZero();
+        }
+    }
+    
+    public void setPlayerHasNotFinished(){
+        for(Player p : players){
+            p.setHasFinished(false);
+        }
+    }
+    
+    public byte[] isLetterRight(byte c){
+        byte[] indexes = new byte[0];
+        for(int i=0;i<word.length();i++){
+            if(word.charAt(i) == c){
+                indexes = add(indexes, i);
+            }
+        }
+        return indexes;
     }
     
     public byte[] add(byte[] array, int index){
@@ -97,6 +145,14 @@ public class Game {
         }
         newIndexes[array.length] = (byte)index;
         return newIndexes;
+    }
+        
+    public void addPointsToPlayer(String playerName){
+        double timeFormBeginning = (System.currentTimeMillis() - this.beginning) / 1000;
+        if(timeFormBeginning <= this.lengthInSeconds){
+            double points = ((this.lengthInSeconds - timeFormBeginning) / this.lengthInSeconds) * 500.0;
+            getPlayer(playerName).addPoints((int)points);
+        }
     }
 
     public String toString(){

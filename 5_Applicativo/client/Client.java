@@ -26,88 +26,298 @@ public class Client {
     private String word;
     private String maskedWord;
     private boolean hasStarted;
+    private boolean hasFinished;
     private int errors;
 
-    public Client(App a, String userName) throws IOException {
+    public Client(App a) throws IOException {
         server = new Socket(SERVER_IP, SERVER_PORT);
         out = new DataOutputStream(server.getOutputStream());
         this.a = a;
-        this.userName = userName;
+        this.userName = "";
         this.gameName = null;
         this.hasStarted = false;
+        this.hasFinished = false;
         this.word = null;
         this.errors = 0;
         serverConnection = new ServerHandler(server, this);
         new Thread(serverConnection).start();
     }
 
-    public void setUserName(String userName) {
-        this.userName = userName;
-    }
-
     public void setGameName(String gameName) {
         this.gameName = gameName;
-    }
-
-    public String getGameName() {
-        return gameName;
     }
 
     public void write(byte[] msg) throws IOException {
         out.write(msg);
     }
 
-    public void closeConnection() throws IOException {
-        this.server.close();
-    }
-
     private void setHasStarted(boolean b) {
         this.hasStarted = b;
     }
-    
+
     private void setWord(String string) {
         this.word = string;
     }
 
+    public void setMaskedWord() {
+        StringBuilder mw = new StringBuilder();
+        if (word != null) {
+            for (int i = 0; i < word.length(); i++) {
+                mw.append("*");
+            }
+            maskedWord = mw.toString();
+        }
+    }
+
+    public void revealIndexes(byte[] indexes, String letter) {
+        StringBuilder nmw = new StringBuilder(this.maskedWord);
+        for (int i = 0; i < indexes.length; i++) {
+            nmw.replace(indexes[i], indexes[i] + 1, letter);
+        }
+        this.maskedWord = nmw.toString();
+    }
 
     public void elaborateRequest(String msg) throws IOException {
-        
+        if (!hasStarted) {
+            if (msg.toLowerCase().equals("create game")) {
+                createGame();
+            } else if (msg.toLowerCase().contains("join game")) {
+                joinGame(msg);
+            } else if (msg.toLowerCase().equals("get players")) {
+                getPlayers();
+            } else if (msg.toLowerCase().equals("leave game")) {
+                leaveGame();
+            } else if (msg.toLowerCase().equals("start game")) {
+                startGame();
+            } else if (msg.toLowerCase().contains("change username")) {
+                changeUsername(a.getKeyboard());
+            }
+        } else if (this.errors < 10 && this.maskedWord.contains("*")) {
+            sendLetter(msg);
+        } else {
+            a.writeOnConsole("You have to wait until the end of the turn to play again!");
+        }
+    }
+
+    private void sendLetter(String msg) throws IOException {
+        if (!msg.trim().isEmpty()) {
+            write(ProtocolCodes.buildSendLetterPacket(gameName, msg.charAt(0)));
+        }
     }
 
     public void changeUsername(BufferedReader k) {
         boolean done = false;
-        while(!done){
-            try{
+        while (!done) {
+            try {
                 System.out.print("Type your new name: ");
                 String newUserName = k.readLine();
-                if(UsernameChecker.isUsernameValid(newUserName)){
+                if (UsernameChecker.isUsernameValid(newUserName)) {
                     done = true;
                     this.userName = newUserName;
                     System.out.printf("Username changed to %s!\n", userName);
                 }
-            }catch(IllegalArgumentException iae){
+            } catch (IllegalArgumentException iae) {
                 System.out.println(iae.getMessage());
-            }catch(IOException ioe){
+            } catch (IOException ioe) {
                 this.userName = "NoKeyboardUser";
                 done = true;
             }
         }
-        
+
     }
 
+    private void startGame() throws IOException {
+        if (gameName != null) {
+            write(ProtocolCodes.buildStartGamePacket(gameName, userName));
+        } else {
+            System.out.println("You are not in a game!");
+        }
+    }
+
+    private void leaveGame() throws IOException {
+        if (gameName != null) {
+            write(ProtocolCodes.buildLeaveGamePacket(gameName, userName));
+        } else {
+            System.out.println("You have to be in a game to leave the game!");
+        }
+    }
+
+    private void getPlayers() throws IOException {
+        if (gameName != null) {
+            write(ProtocolCodes.buildGetPlayerListPacket(gameName));
+        } else {
+            System.out.println("You have to be in a game to get the player's list!");
+        }
+    }
+
+    private void joinGame(String msg) throws IOException {
+        if (gameName == null) {
+            String gameToken = msg.substring("join game".length() + 1);
+            write(ProtocolCodes.buildJoinGamePacket(gameToken, userName));
+        } else {
+            System.out.println("You are already in a game!");
+        }
+    }
+
+    private void createGame() throws IOException {
+        if (gameName == null) {
+            write(ProtocolCodes.buildCreateGamePacket(userName));
+        } else {
+            System.out.println("You are already in a game!");
+        }
+    }
 
     public void elaborateResponse(byte[] response) throws IOException {
-        
+        switch (response[0]) {
+            case ProtocolCodes.GAME_CREATED_SUCCESSFULLY:
+                gameCreatedSuccessfully(response);
+                break;
+            case ProtocolCodes.GAME_JOINED_SUCCESSFULLY:
+                gameJoinedSuccessfully(response);
+                break;
+            case ProtocolCodes.GAME_JOINED_UNSUCCESSFULLY:
+                gameJoinedUnsuccessfully();
+                break;
+            case ProtocolCodes.USERNAME_ALREADY_USED:
+                usernameAlreadyUsed();
+                break;
+            case ProtocolCodes.PLAYER_LIST_RETURNED:
+                playerListReturned(response);
+                break;
+            case ProtocolCodes.GAME_LEAVED_SUCCESSFULLY:
+                gameLeavedSuccessfully();
+                break;
+            case ProtocolCodes.GAME_LEAVED_UNSUCCESSFULLY:
+                gameLeavedUnsuccessfully();
+                break;
+            case ProtocolCodes.GAME_STARTED_SUCCESSFULLY:
+                gameStartedSuccessfully();
+                break;
+            case ProtocolCodes.GAME_STARTED_UNSUCCESSFULLY:
+                gameStartedUnsuccessfully();
+                break;
+            case ProtocolCodes.LETTER_INDEXES:
+                letterIndexes(response);
+                break;
+            case ProtocolCodes.RETURN_GAME_WORD:
+                returnGameWord(response);
+                break;
+            case ProtocolCodes.NOTIFY_TURN_WON:
+            case ProtocolCodes.NOTIFY_TURN_LOST:
+                notifyTurnWonOrLost(response);
+                break;
+            case ProtocolCodes.END_GAME:
+                endGame();
+                break;
+            case ProtocolCodes.END_TURN:
+                endTurn();
+                break;
+            default:
+                break;
+        }
     }
-    
-    private void printGameInfo(){
+
+    private void endTurn() throws IOException {
+        this.errors = 0;
+        getPlayers();
+        write(ProtocolCodes.buildRequestGameWordPacket(this.gameName));
+    }
+
+    private void endGame() throws IOException {
+        a.writeOnConsole("Every player has finished the game!");
+        this.hasFinished = true;
+        getPlayers();
+        write(ProtocolCodes.buildDeleteGamePacket(gameName));
+    }
+
+    private void notifyTurnWonOrLost(byte[] response) {
+        a.writeOnConsole(new String(ProtocolCodes.getDataFromPacket(response)));
+    }
+
+    private void returnGameWord(byte[] response) {
+        setWord(new String(ProtocolCodes.getDataFromPacket(response)));
+        setMaskedWord();
+        if (hasStarted) {
+            printGameInfo();
+        }
+    }
+
+    private void letterIndexes(byte[] response) throws IOException {
+        byte[] indexes = readFromTo(ProtocolCodes.getDataFromPacket(response), 1, response.length - 1);
+        if (indexes.length > 0) {
+            byte[] letter = readFromTo(ProtocolCodes.getDataFromPacket(response), 0, 1);
+            revealIndexes(indexes, new String(letter));
+        } else {
+            this.errors++;
+            write(ProtocolCodes.buildAddErrorPacket(this.gameName, this.userName));
+            if (this.errors == 10) {
+                write(ProtocolCodes.buildPlayerLostPacket(gameName, userName));
+            }
+        }
+        printGameInfo();
+        if (!maskedWord.contains("*")) {
+            write(ProtocolCodes.buildPlayerWonPacket(gameName, userName));
+        }
+    }
+
+    private void gameStartedUnsuccessfully() {
+        a.writeOnConsole("Couldn't start game, you are not the admin");
+    }
+
+    private void gameStartedSuccessfully() {
+        a.writeOnConsole("Game started by the admin!");
+        setHasStarted(true);
+        printGameInfo();
+    }
+
+    private void gameLeavedUnsuccessfully() {
+        a.writeOnConsole("Error while leaving game");
+    }
+
+    private void gameLeavedSuccessfully() {
+        setGameName(null);
+        a.writeOnConsole("Game leaved!");
+    }
+
+    private void playerListReturned(byte[] response) {
+        byte[] players = ProtocolCodes.getDataFromPacket(response);
+        a.writeOnConsole(new String(players));
+        if (hasFinished) {
+            setHasStarted(false);
+            System.exit(0);
+        }
+    }
+
+    private void usernameAlreadyUsed() {
+        a.writeOnConsole("Your username is already used in the game that you are trying to join in, please change it!");
+    }
+
+    private void gameJoinedUnsuccessfully() {
+        a.writeOnConsole("Game unavailable, check token again");
+    }
+
+    private void gameJoinedSuccessfully(byte[] response) throws IOException {
+        a.writeOnConsole("Game joined!");
+        String gameToken = new String(ProtocolCodes.getDataFromPacket(response));
+        setGameName(gameToken);
+        write(ProtocolCodes.buildRequestGameWordPacket(this.gameName));
+    }
+
+    private void gameCreatedSuccessfully(byte[] response) throws IOException {
+        String gameToken = new String(ProtocolCodes.getDataFromPacket(response));
+        setGameName(gameToken);
+        write(ProtocolCodes.buildRequestGameWordPacket(this.gameName));
+        a.writeOnConsole("Game " + gameName + " created!");
+    }
+
+    private void printGameInfo() {
         a.writeOnConsole("Current word: " + this.maskedWord);
         a.writeOnConsole("Errors: " + this.errors + "/10");
     }
-    
-    private byte[] readFromTo(byte[] packet, int start, int end){
+
+    private byte[] readFromTo(byte[] packet, int start, int end) {
         byte[] data = new byte[end - start];
-        for(int i=0;i<data.length;i++){
+        for (int i = 0; i < data.length; i++) {
             data[i] = packet[start + i];
         }
         return data;

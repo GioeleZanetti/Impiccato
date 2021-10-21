@@ -15,9 +15,9 @@ public class App {
     private Client c;
     private BufferedReader k;
 
-    public App(String userName) {
+    public App() {
         try{
-            this.c = new Client(this, userName);
+            this.c = new Client(this);
             this.k = new BufferedReader(new InputStreamReader(System.in));
         }catch(IOException e){
             System.out.println("Error while creating client, server not available");
@@ -39,7 +39,7 @@ public class App {
     
     public static void main(String[] args) {
         try{
-            App a = new App("");
+            App a = new App();
             a.c.changeUsername(a.k);
             while (true) {             
                 a.getClient().elaborateRequest(a.k.readLine());

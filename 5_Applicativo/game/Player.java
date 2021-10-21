@@ -63,7 +63,11 @@ public class Player {
         return this.errors;
     }
     
+    public void setErrorsToZero(){
+        this.errors = 0;
+    }
+    
     public String toString(){
-        return "Giocatore " + name + ": Punti: " + points + ", Errori: " + errors;
+        return "Giocatore " + name + ": Punti: " + points;
     }
 }
