@@ -30,8 +30,8 @@ public class GameHoster {
         return false;
     }
 
-    public static void addGame(String gameName){
-        games.put(gameName, new Game(gameName));
+    public static void addGame(String gameName, int turns, int length){
+        games.put(gameName, new Game(gameName, turns, length));
     }
     
     public static void removeGame(String gameName){

@@ -14,21 +14,29 @@ public class Game {
     private boolean hasStarted;
     private String word;
     private String admin;
-    private int lengthInSeconds;
+    private final int LENGTH_IN_SECONDS;
     private long beginning;
     private int turn;
     private final int TURN_NUMBER;
 
     public Game(String gameName) {
+        this(gameName, 5, 60);
+    }
+    
+    public Game(String gameName, int turns, int lengthInSeconds){
         this.name = gameName;
         this.players = new ArrayList<>();
         this.hasStarted = false;
         this.word = Word.getRandomWord();
         this.admin = "";
-        this.lengthInSeconds = 60;
+        if(lengthInSeconds > 300 || lengthInSeconds < 30)
+            lengthInSeconds = 60;
+        this.LENGTH_IN_SECONDS = lengthInSeconds;
         this.beginning = 0;
         this.turn = 0;
-        this.TURN_NUMBER = 2;
+        if(turns > 10 || turns < 0)
+            turns = 2;
+        this.TURN_NUMBER = turns;
     }
     
     public void startGame(){
@@ -56,6 +64,10 @@ public class Game {
         return word;
     }
     
+    public int getLengthInSeconds(){
+        return this.LENGTH_IN_SECONDS;
+    }
+   
     public void addPlayer(String name){
         players.add(new Player(name));
     }
@@ -113,7 +125,7 @@ public class Game {
         this.word = Word.getRandomWord();
         this.beginning = System.currentTimeMillis();
         setPlayerErrorsToZero();
-        setPlayerHasNotFinished();
+        setPlayerHasFinished(false);
     }
     
     public void setPlayerErrorsToZero(){
@@ -122,9 +134,9 @@ public class Game {
         }
     }
     
-    public void setPlayerHasNotFinished(){
+    public void setPlayerHasFinished(boolean state){
         for(Player p : players){
-            p.setHasFinished(false);
+            p.setHasFinished(state);
         }
     }
     
@@ -149,8 +161,8 @@ public class Game {
         
     public void addPointsToPlayer(String playerName){
         double timeFormBeginning = (System.currentTimeMillis() - this.beginning) / 1000;
-        if(timeFormBeginning <= this.lengthInSeconds){
-            double points = ((this.lengthInSeconds - timeFormBeginning) / this.lengthInSeconds) * 500.0;
+        if(timeFormBeginning <= this.LENGTH_IN_SECONDS){
+            double points = ((this.LENGTH_IN_SECONDS - timeFormBeginning) / this.LENGTH_IN_SECONDS) * 500.0;
             getPlayer(playerName).addPoints((int)points);
         }
     }

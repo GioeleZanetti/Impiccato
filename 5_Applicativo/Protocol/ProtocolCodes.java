@@ -35,6 +35,7 @@ public class ProtocolCodes {
     public static final int ADD_ERROR = 34;
     public static final int END_TURN = 35;
     public static final int DELETE_GAME = 36;
+    public static final int FORCE_TURN_END = 37;
     
     public static byte[] getDataFromPacket(byte[] packet){
         byte[] data = new byte[packet.length - 1];
@@ -44,10 +45,14 @@ public class ProtocolCodes {
         return data;
     }
     
-    public static byte[] buildCreateGamePacket(String userName){
+    public static byte[] buildCreateGamePacket(String userName, int turns, int length){
         byte[] packet = new byte[2];
         packet[0] = (byte) (packet.length - 1);
         packet[1] = CREATE_GAME;
+        byte[] turnNumber = {(byte)turns};
+        byte[] lengthNumber = {(byte)length};
+        packet = addDataToPacket(packet, turnNumber);
+        packet = addDataToPacket(packet, lengthNumber);
         packet = addDataToPacket(packet, userName.getBytes());
         return packet;
     }
@@ -272,12 +277,39 @@ public class ProtocolCodes {
         return packet;
     }
     
-    public static void main(String[] args) {
-        byte[] a = buildSendLetterPacket("aaaaaaaa",'c');
-        byte[] data = getDataFromPacket(a);
+    public static byte[] buildForceTurnEndPacket(String gameName){
+        byte[] packet = new byte[2];
+        packet[0] = (byte)(packet.length - 1);
+        packet[1] = FORCE_TURN_END;
+        packet = addDataToPacket(packet, gameName.getBytes());
+        return packet;
+    }
+    
+    public static byte[] removeLengthFromPacket(byte[] packet){
+        byte[] newPacket = new byte[packet.length - 1];
+        for(int i=0;i<newPacket.length;i++){
+            newPacket[i] = packet[i+1];
+        }
+        return newPacket;
+    }
+    
+    public static void printPacket(byte[] data){
         for(int i=0;i<data.length;i++){
             System.out.println(data[i]);
         }
+    }
+    
+    public static byte[] readFromTo(byte[] packet, int start, int end) {
+        byte[] data = new byte[end - start];
+        for (int i = 0; i < data.length; i++) {
+            data[i] = packet[start + i];
+        }
+        return data;
+    }
+    
+    public static void main(String[] args) {
+        byte[] a = removeLengthFromPacket(buildForceTurnEndPacket("aaaaaaaa"));
+        printPacket(a);
         /*String s = "è";
         byte[] b = s.getBytes();
         for(int i=0;i<b.length;i++){

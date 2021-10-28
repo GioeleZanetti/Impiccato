@@ -28,6 +28,7 @@ public class Client {
     private boolean hasStarted;
     private boolean hasFinished;
     private int errors;
+    private int currentTurn;
 
     public Client(App a) throws IOException {
         server = new Socket(SERVER_IP, SERVER_PORT);
@@ -39,6 +40,7 @@ public class Client {
         this.hasFinished = false;
         this.word = null;
         this.errors = 0;
+        this.currentTurn = 1;
         serverConnection = new ServerHandler(server, this);
         new Thread(serverConnection).start();
     }
@@ -80,7 +82,7 @@ public class Client {
     public void elaborateRequest(String msg) throws IOException {
         if (!hasStarted) {
             if (msg.toLowerCase().equals("create game")) {
-                createGame();
+                createGame(a.getKeyboard());
             } else if (msg.toLowerCase().contains("join game")) {
                 joinGame(msg);
             } else if (msg.toLowerCase().equals("get players")) {
@@ -159,12 +161,29 @@ public class Client {
         }
     }
 
-    private void createGame() throws IOException {
+    private void createGame(BufferedReader k) throws IOException {
         if (gameName == null) {
-            write(ProtocolCodes.buildCreateGamePacket(userName));
+            int turns = getParameter(k, "turn");
+            int length = getParameter(k, "length");
+            write(ProtocolCodes.buildCreateGamePacket(userName, turns, length));
         } else {
             System.out.println("You are already in a game!");
         }
+    }
+    
+    private int getParameter(BufferedReader k, String parameterName){
+        boolean inserted = false;
+        a.writeOnConsole("Insert " + parameterName + " number:");
+        while(!inserted){
+            try{
+                return Integer.parseInt(k.readLine());
+            }catch(NumberFormatException nfe){
+                a.writeOnConsole("Number not valid, try again");
+            }catch(IOException ioe){
+                return 1;
+            }
+        }
+        return -1;
     }
 
     public void elaborateResponse(byte[] response) throws IOException {
@@ -219,7 +238,10 @@ public class Client {
 
     private void endTurn() throws IOException {
         this.errors = 0;
+        this.currentTurn++;
         getPlayers();
+        printWord();
+        a.writeOnConsole("--------------------------------------------------------");
         write(ProtocolCodes.buildRequestGameWordPacket(this.gameName));
     }
 
@@ -227,6 +249,7 @@ public class Client {
         a.writeOnConsole("Every player has finished the game!");
         this.hasFinished = true;
         getPlayers();
+        printWord();
         write(ProtocolCodes.buildDeleteGamePacket(gameName));
     }
 
@@ -243,9 +266,9 @@ public class Client {
     }
 
     private void letterIndexes(byte[] response) throws IOException {
-        byte[] indexes = readFromTo(ProtocolCodes.getDataFromPacket(response), 1, response.length - 1);
+        byte[] indexes = ProtocolCodes.readFromTo(ProtocolCodes.getDataFromPacket(response), 1, response.length - 1);
         if (indexes.length > 0) {
-            byte[] letter = readFromTo(ProtocolCodes.getDataFromPacket(response), 0, 1);
+            byte[] letter = ProtocolCodes.readFromTo(ProtocolCodes.getDataFromPacket(response), 0, 1);
             revealIndexes(indexes, new String(letter));
         } else {
             this.errors++;
@@ -311,16 +334,14 @@ public class Client {
     }
 
     private void printGameInfo() {
+        a.writeOnConsole("Current turn: " + this.currentTurn);
         a.writeOnConsole("Current word: " + this.maskedWord);
         a.writeOnConsole("Errors: " + this.errors + "/10");
     }
 
-    private byte[] readFromTo(byte[] packet, int start, int end) {
-        byte[] data = new byte[end - start];
-        for (int i = 0; i < data.length; i++) {
-            data[i] = packet[start + i];
-        }
-        return data;
+
+    private void printWord() {
+        a.writeOnConsole("The word was " + this.word + "!");
     }
 
 }
