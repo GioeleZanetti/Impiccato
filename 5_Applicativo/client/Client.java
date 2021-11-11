@@ -29,8 +29,9 @@ public class Client {
     private boolean hasFinished;
     private int errors;
     private int currentTurn;
+    private boolean isGraphic;
 
-    public Client(App a) throws IOException {
+    public Client(App a, boolean isGraphic) throws IOException {
         server = new Socket(SERVER_IP, SERVER_PORT);
         out = new DataOutputStream(server.getOutputStream());
         this.a = a;
@@ -41,8 +42,13 @@ public class Client {
         this.word = null;
         this.errors = 0;
         this.currentTurn = 1;
+        this.isGraphic = isGraphic;
         serverConnection = new ServerHandler(server, this);
         new Thread(serverConnection).start();
+    }
+    
+    public void setUsername(String username){
+        this.userName = username;
     }
 
     public void setGameName(String gameName) {

@@ -17,7 +17,7 @@ public class App {
 
     public App() {
         try{
-            this.c = new Client(this);
+            this.c = new Client(this, false);
             this.k = new BufferedReader(new InputStreamReader(System.in));
         }catch(IOException e){
             System.out.println("Error while creating client, server not available");

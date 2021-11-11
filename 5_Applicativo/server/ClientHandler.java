@@ -240,6 +240,7 @@ public class ClientHandler implements Runnable {
             if (!game.containsName(userName)) {
                 setGameToken(requestGameToken);
                 game.addPlayer(userName);
+                System.out.printf("Player %s joined game %s\n", userName, requestGameToken);
                 out.write(ProtocolCodes.buildGameJoinedSuccessfullyPacket(requestGameToken));
             } else {
                 out.write(ProtocolCodes.buildUsernameAlreadyUsedPacket());
