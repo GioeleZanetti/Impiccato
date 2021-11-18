@@ -9,13 +9,24 @@ package graphic;
  *
  * @author gioele.zanetti
  */
-public class GamePanel extends javax.swing.JPanel {
+public class GamePanel extends javax.swing.JPanel 
+implements Addable{
 
+    private MainFrame frame;
+    
     /**
      * Creates new form GamePanel
      */
-    public GamePanel() {
+    public GamePanel(MainFrame frame) {
         initComponents();
+        this.frame = frame;
+    }
+    
+    public void setData(Object o, String parameter) {
+        if(parameter.equals("end game")){
+            frame.removePanel();
+            frame.addPanel(new FinalPanel(this.frame));
+        }
     }
 
     /**

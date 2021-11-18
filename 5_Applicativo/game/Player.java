@@ -68,6 +68,6 @@ public class Player {
     }
     
     public String toString(){
-        return "Giocatore " + name + ": Punti: " + points;
+        return name + " : " + points;
     }
 }

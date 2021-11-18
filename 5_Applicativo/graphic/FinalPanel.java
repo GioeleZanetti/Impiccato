@@ -9,13 +9,21 @@ package graphic;
  *
  * @author gioele.zanetti
  */
-public class FinalPanel extends javax.swing.JPanel {
+public class FinalPanel extends javax.swing.JPanel 
+implements Addable{
 
+    private MainFrame frame;
+    
     /**
      * Creates new form FinalPanel
      */
-    public FinalPanel() {
+    public FinalPanel(MainFrame frame) {
         initComponents();
+        this.frame = frame;
+    }
+    
+    public void setData(Object o, String parameter) {
+        
     }
 
     /**
@@ -34,6 +42,11 @@ public class FinalPanel extends javax.swing.JPanel {
         jTextField1.setText("Classifica");
 
         jToggleButton1.setText("Torna alla schermata principale");
+        jToggleButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jToggleButton1ActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -58,6 +71,11 @@ public class FinalPanel extends javax.swing.JPanel {
                 .addContainerGap(45, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
+
+    private void jToggleButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton1ActionPerformed
+        this.frame.removePanel();
+        this.frame.addPanel(new MainPanel(this.frame));
+    }//GEN-LAST:event_jToggleButton1ActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

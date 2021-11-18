@@ -5,17 +5,29 @@
  */
 package graphic;
 
+import java.io.IOException;
+
 /**
  *
  * @author gioele.zanetti
  */
-public class CreateGamePanel extends javax.swing.JPanel {
+public class CreateGamePanel extends javax.swing.JPanel 
+implements Addable{
 
+    private MainFrame frame;
+    
     /**
      * Creates new form CreateGamePanel
      */
-    public CreateGamePanel() {
+    public CreateGamePanel(MainFrame frame) {
         initComponents();
+        this.frame = frame;
+    }
+    
+    
+    @Override
+    public void setData(Object o, String parameter) {
+        
     }
 
     /**
@@ -42,6 +54,11 @@ public class CreateGamePanel extends javax.swing.JPanel {
         jTextField2.setText("Numero");
 
         jButton1.setText("Crea partita");
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -81,6 +98,21 @@ public class CreateGamePanel extends javax.swing.JPanel {
                 .addContainerGap(85, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
+
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        try{
+            Object[] parameters = new Object[2];
+            parameters[0] = Integer.parseInt(jTextField1.getText());
+            parameters[1] = Integer.parseInt(jTextField2.getText());
+            this.frame.removePanel();
+            this.frame.addPanel(new WaitingPanel(this.frame));
+            this.frame.getClient().elaborateRequest("create game", parameters);
+        }catch(NumberFormatException nfe){
+            return;
+        }catch(IOException ioe){
+            return;
+        }
+    }//GEN-LAST:event_jButton1ActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

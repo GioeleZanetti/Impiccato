@@ -9,30 +9,46 @@ import application.App;
 import client.Client;
 import game.UsernameChecker;
 import java.io.IOException;
+import javax.swing.JFrame;
 
 /**
  *
  * @author gioele.zanetti
  */
-public class MainPanel extends javax.swing.JPanel {
+public class MainPanel extends javax.swing.JPanel 
+implements Addable{
 
-    private App a;
-    private Client c;
+    private MainFrame frame;
     
     /**
      * Creates new form MainPanel
      */
-    public MainPanel() {
+    public MainPanel(MainFrame frame) {
         initComponents();
-        
-        
-        try {
-            a = new App();
-            c = new Client(a, true);
-        } catch (IOException ex) {
-        }
+        this.frame = frame;
+
+    }
+    
+    public MainPanel(MainFrame frame, String username) {
+        initComponents();
+        this.frame = frame;
+        jTextField1.setText(username);
     }
 
+    
+    @Override
+    public void setData(Object o, String parameter) {
+        if(parameter.equals("gameToken")){
+            this.frame.getClient().setGameName((String)o);
+            this.frame.removePanel();
+            this.frame.addPanel(new WaitingPanel(this.frame));
+        }else if(parameter.equals("join game")){
+            this.frame.getClient().setGameName((String)o);
+            this.frame.removePanel();
+            this.frame.addPanel(new WaitingPanel(this.frame, (String)o));
+        }
+    }
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -81,11 +97,11 @@ public class MainPanel extends javax.swing.JPanel {
                             .addComponent(jButton1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(jButton2, javax.swing.GroupLayout.DEFAULT_SIZE, 150, Short.MAX_VALUE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jTextField2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(jTextField2, javax.swing.GroupLayout.PREFERRED_SIZE, 92, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
                         .addContainerGap()
                         .addComponent(jButton3)))
-                .addContainerGap(56, Short.MAX_VALUE))
+                .addContainerGap(28, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -105,22 +121,28 @@ public class MainPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        // creare partita
+        if(!jTextField1.getText().isBlank() && !jTextField1.getText().isEmpty()
+        && !jTextField2.getText().isBlank() && !jTextField2.getText().isEmpty()
+        && UsernameChecker.isUsernameValid(jTextField1.getText())){
+            frame.setUsername(jTextField1.getText());
+            this.frame.removePanel();
+            this.frame.addPanel(new CreateGamePanel(this.frame));
+        }
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
         if(!jTextField1.getText().isBlank() && !jTextField1.getText().isEmpty()
         && !jTextField2.getText().isBlank() && !jTextField2.getText().isEmpty()
         && UsernameChecker.isUsernameValid(jTextField1.getText())){
-            c.setUsername(jTextField1.getText());
+            frame.setUsername(jTextField1.getText());
             try {
-                c.elaborateRequest("join game " + jTextField2.getText());
+                frame.getClient().elaborateRequest("join game " + jTextField2.getText());
             } catch (IOException ex) {
                 
             }
         }
     }//GEN-LAST:event_jButton2ActionPerformed
-
+    
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButton1;

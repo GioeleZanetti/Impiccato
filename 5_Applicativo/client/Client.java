@@ -6,9 +6,11 @@ package client;
 
 import application.App;
 import game.UsernameChecker;
+import graphic.MainFrame;
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.lang.invoke.VarHandle;
 import java.net.Socket;
 import protocol.ProtocolCodes;
 
@@ -19,6 +21,7 @@ public class Client {
 
     private Socket server;
     private App a;
+    private MainFrame frame;
     private DataOutputStream out;
     private ServerHandler serverConnection;
     private String userName;
@@ -47,12 +50,36 @@ public class Client {
         new Thread(serverConnection).start();
     }
     
+    public Client(MainFrame frame, boolean isGraphic) throws IOException {
+        server = new Socket(SERVER_IP, SERVER_PORT);
+        out = new DataOutputStream(server.getOutputStream());
+        this.frame = frame;
+        this.userName = "";
+        this.gameName = null;
+        this.hasStarted = false;
+        this.hasFinished = false;
+        this.word = null;
+        this.errors = 0;
+        this.currentTurn = 1;
+        this.isGraphic = isGraphic;
+        serverConnection = new ServerHandler(server, this);
+        new Thread(serverConnection).start();
+    }
+    
     public void setUsername(String username){
         this.userName = username;
+    }
+    
+    public String getUsername(){
+        return userName;
     }
 
     public void setGameName(String gameName) {
         this.gameName = gameName;
+    }
+    
+    public String getGameToken(){
+        return gameName;
     }
 
     public void write(byte[] msg) throws IOException {
@@ -85,10 +112,14 @@ public class Client {
         this.maskedWord = nmw.toString();
     }
 
-    public void elaborateRequest(String msg) throws IOException {
+    public void elaborateRequest(String msg, Object[] parameters) throws IOException {
         if (!hasStarted) {
-            if (msg.toLowerCase().equals("create game")) {
-                createGame(a.getKeyboard());
+            if (msg.toLowerCase().contains("create game")) {
+                if(!isGraphic){
+                    createGame(a.getKeyboard());
+                }else{
+                    createGameGraphic(parameters);
+                }
             } else if (msg.toLowerCase().contains("join game")) {
                 joinGame(msg);
             } else if (msg.toLowerCase().equals("get players")) {
@@ -105,6 +136,10 @@ public class Client {
         } else {
             a.writeOnConsole("You have to wait until the end of the turn to play again!");
         }
+    }
+    
+    public void elaborateRequest(String msg) throws IOException {
+        elaborateRequest(msg, new Object[0]);
     }
 
     private void sendLetter(String msg) throws IOException {
@@ -177,6 +212,16 @@ public class Client {
         }
     }
     
+    private void createGameGraphic(Object[] parameters) throws IOException {
+        if (gameName == null) {
+            int length = (int)parameters[0];
+            int turns = (int)parameters[1];
+            write(ProtocolCodes.buildCreateGamePacket(userName, turns, length));
+        } else {
+            System.out.println("You are already in a game!");
+        }
+    }
+    
     private int getParameter(BufferedReader k, String parameterName){
         boolean inserted = false;
         a.writeOnConsole("Insert " + parameterName + " number:");
@@ -237,6 +282,15 @@ public class Client {
             case ProtocolCodes.END_TURN:
                 endTurn();
                 break;
+            case ProtocolCodes.PLAYER_JOINED_GAME:
+                playerJoinedGame(response);
+                break;
+            case ProtocolCodes.PLAYER_LEFT_GAME:
+                playerLeftGame(response);
+                break;
+            case ProtocolCodes.ADMIN_LEFT_GAME:
+                adminLeftGame();
+                break;
             default:
                 break;
         }
@@ -245,22 +299,30 @@ public class Client {
     private void endTurn() throws IOException {
         this.errors = 0;
         this.currentTurn++;
-        getPlayers();
-        printWord();
-        a.writeOnConsole("--------------------------------------------------------");
+        if(!isGraphic){
+            getPlayers();
+            printWord();
+            a.writeOnConsole("--------------------------------------------------------");
+        }
         write(ProtocolCodes.buildRequestGameWordPacket(this.gameName));
     }
 
     private void endGame() throws IOException {
-        a.writeOnConsole("Every player has finished the game!");
         this.hasFinished = true;
-        getPlayers();
-        printWord();
+        if(!isGraphic){
+            a.writeOnConsole("Every player has finished the game!");
+            getPlayers();
+            printWord();
+        }else{
+            this.frame.getCurrentPanel().setData(true, "end game");
+        }
         write(ProtocolCodes.buildDeleteGamePacket(gameName));
     }
 
     private void notifyTurnWonOrLost(byte[] response) {
-        a.writeOnConsole(new String(ProtocolCodes.getDataFromPacket(response)));
+        if(!isGraphic){
+            a.writeOnConsole(new String(ProtocolCodes.getDataFromPacket(response)));
+        }
     }
 
     private void returnGameWord(byte[] response) {
@@ -290,27 +352,45 @@ public class Client {
     }
 
     private void gameStartedUnsuccessfully() {
-        a.writeOnConsole("Couldn't start game, you are not the admin");
+        if(!isGraphic){
+            a.writeOnConsole("Couldn't start game, you are not the admin");
+        }
     }
 
     private void gameStartedSuccessfully() {
-        a.writeOnConsole("Game started by the admin!");
         setHasStarted(true);
-        printGameInfo();
+        if(!isGraphic){
+            a.writeOnConsole("Game started by the admin!");
+            printGameInfo();
+        }else{
+            this.frame.getCurrentPanel().setData(true, "start game");
+        }
+        
     }
 
     private void gameLeavedUnsuccessfully() {
-        a.writeOnConsole("Error while leaving game");
+        if(!isGraphic){
+            a.writeOnConsole("Error while leaving game");
+        }
     }
 
     private void gameLeavedSuccessfully() {
         setGameName(null);
-        a.writeOnConsole("Game leaved!");
+        if(!isGraphic){
+            a.writeOnConsole("Game leaved!");
+        }else{
+            this.frame.getCurrentPanel().setData(true, "leave game");
+        }
     }
 
     private void playerListReturned(byte[] response) {
         byte[] players = ProtocolCodes.getDataFromPacket(response);
-        a.writeOnConsole(new String(players));
+        if(!isGraphic){
+            a.writeOnConsole(new String(players));
+        }else{
+            this.frame.getCurrentPanel().setData(new String(players), "playerList");
+        }
+        
         if (hasFinished) {
             setHasStarted(false);
             System.exit(0);
@@ -318,25 +398,68 @@ public class Client {
     }
 
     private void usernameAlreadyUsed() {
-        a.writeOnConsole("Your username is already used in the game that you are trying to join in, please change it!");
+        if(!isGraphic){
+            a.writeOnConsole("Your username is already used in the game that you are trying to join in, please change it!");
+        }
     }
 
     private void gameJoinedUnsuccessfully() {
-        a.writeOnConsole("Game unavailable, check token again");
+        if(!isGraphic){
+            a.writeOnConsole("Game unavailable, check token again");
+        }
     }
 
     private void gameJoinedSuccessfully(byte[] response) throws IOException {
-        a.writeOnConsole("Game joined!");
         String gameToken = new String(ProtocolCodes.getDataFromPacket(response));
         setGameName(gameToken);
+        if(!isGraphic){
+            a.writeOnConsole("Game joined!");
+        }else{
+            this.frame.getCurrentPanel().setData(gameToken, "join game");
+        }
         write(ProtocolCodes.buildRequestGameWordPacket(this.gameName));
+    }
+    
+    private void playerJoinedGame(byte[] response) throws IOException {
+        String username = new String(ProtocolCodes.getDataFromPacket(response));
+        if(!isGraphic){
+            a.writeOnConsole("Player " + username + " joined the game!");
+        }else{
+            write(ProtocolCodes.buildGetPlayerListPacket(this.gameName));
+        }
+    }
+    
+    private void playerLeftGame(byte[] response) throws IOException {
+
+        String username = new String(ProtocolCodes.getDataFromPacket(response));
+        if(!isGraphic){
+            a.writeOnConsole("Player " + username + " left the game!");
+        }else{
+            if(this.gameName != null && !this.hasFinished){
+                write(ProtocolCodes.buildGetPlayerListPacket(this.gameName));
+            }
+        }
+    }
+    
+    private void adminLeftGame() throws IOException{
+        
+        hasFinished = true;
+        if(!isGraphic){
+            a.writeOnConsole("Admin left the game, please leave the game!");
+        }else{
+            
+        }
     }
 
     private void gameCreatedSuccessfully(byte[] response) throws IOException {
         String gameToken = new String(ProtocolCodes.getDataFromPacket(response));
         setGameName(gameToken);
         write(ProtocolCodes.buildRequestGameWordPacket(this.gameName));
-        a.writeOnConsole("Game " + gameName + " created!");
+        if(!isGraphic){
+            a.writeOnConsole("Game " + gameName + " created!");
+        }else{
+            this.frame.getCurrentPanel().setData(gameToken, "gameToken");
+        }
     }
 
     private void printGameInfo() {

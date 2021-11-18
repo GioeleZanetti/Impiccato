@@ -96,7 +96,6 @@ public class ClientHandler implements Runnable {
                 deleteGame(request);
                 break;
             case ProtocolCodes.FORCE_TURN_END:
-                System.out.println("Forzo fine turno");
                 forceTurnEnd(request);
                 break;
             default:
@@ -110,14 +109,12 @@ public class ClientHandler implements Runnable {
         this.timer = new Timer(length * 1000, action);
         this.timer.setRepeats(false);
         this.timer.start();
-        System.out.println("Timer partito");
     }
 
     ActionListener action = new ActionListener() {
         public void actionPerformed(ActionEvent evt) {
             try {
                 byte[] packet = ProtocolCodes.removeLengthFromPacket(ProtocolCodes.buildForceTurnEndPacket(getGameToken()));
-                System.out.println("Azione eseguita");
                 elaborateRequest(packet);
             } catch (IOException ioe) {
 
@@ -220,8 +217,18 @@ public class ClientHandler implements Runnable {
         String requestGameToken = new String(ProtocolCodes.readFromTo(ProtocolCodes.getDataFromPacket(request), 0, 8));
         var game = GameHoster.getGame(requestGameToken);
         if (game != null) {
-            game.removePlayer(new String(ProtocolCodes.readFromTo(ProtocolCodes.getDataFromPacket(request), 8, request.length - 1)));
-            out.write(ProtocolCodes.buildGameLeavedSuccessfullyPacket());
+            String username = new String(ProtocolCodes.readFromTo(ProtocolCodes.getDataFromPacket(request), 8, request.length - 1));
+            if (!GameHoster.getGame(requestGameToken).getAdmin().equals(username)) {
+                game.removePlayer(username);
+                out.write(ProtocolCodes.buildGameLeavedSuccessfullyPacket());
+                broadcastToGame(requestGameToken, ProtocolCodes.buildPlayerLeftGamePacket(username));
+                
+            }else{
+                broadcastToGame(requestGameToken, ProtocolCodes.buildAdminLeftGamePacket());
+                GameHoster.removeGame(requestGameToken);
+                System.out.println("Removing " + requestGameToken);
+            }
+            System.out.println("Player " + username + " left game " + requestGameToken);
         } else {
             out.write(ProtocolCodes.buildGameLeavedUnsuccessfullyPacket());
         }
@@ -242,6 +249,7 @@ public class ClientHandler implements Runnable {
                 game.addPlayer(userName);
                 System.out.printf("Player %s joined game %s\n", userName, requestGameToken);
                 out.write(ProtocolCodes.buildGameJoinedSuccessfullyPacket(requestGameToken));
+                broadcastToGame(requestGameToken, ProtocolCodes.buildPlayerJoinedGamePacket(userName));
             } else {
                 out.write(ProtocolCodes.buildUsernameAlreadyUsedPacket());
             }
@@ -260,7 +268,7 @@ public class ClientHandler implements Runnable {
         GameHoster.getGame(requestGameToken).setAdmin(userName);
         setGameToken(requestGameToken);
         out.write(ProtocolCodes.buildGameCreatedSuccessfullyPacket(requestGameToken));
-        System.out.println("Creating " + requestGameToken);
+        System.out.printf("Creating %s, %d turns, %d length\n", requestGameToken, turns, length);
     }
 
     private void broadcastToGame(String gameToken, byte[] packet) throws IOException {

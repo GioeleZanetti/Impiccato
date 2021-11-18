@@ -36,6 +36,9 @@ public class ProtocolCodes {
     public static final int END_TURN = 35;
     public static final int DELETE_GAME = 36;
     public static final int FORCE_TURN_END = 37;
+    public static final int PLAYER_JOINED_GAME = 38;
+    public static final int PLAYER_LEFT_GAME = 39;
+    public static final int ADMIN_LEFT_GAME = 40;
     
     public static byte[] getDataFromPacket(byte[] packet){
         byte[] data = new byte[packet.length - 1];
@@ -282,6 +285,29 @@ public class ProtocolCodes {
         packet[0] = (byte)(packet.length - 1);
         packet[1] = FORCE_TURN_END;
         packet = addDataToPacket(packet, gameName.getBytes());
+        return packet;
+    }
+    
+    public static byte[] buildPlayerJoinedGamePacket(String username){
+        byte[] packet = new byte[2];
+        packet[0] = (byte)(packet.length - 1);
+        packet[1] = PLAYER_JOINED_GAME;
+        packet = addDataToPacket(packet, username.getBytes());
+        return packet;
+    }
+    
+    public static byte[] buildPlayerLeftGamePacket(String username){
+        byte[] packet = new byte[2];
+        packet[0] = (byte)(packet.length - 1);
+        packet[1] = PLAYER_LEFT_GAME;
+        packet = addDataToPacket(packet, username.getBytes());
+        return packet;
+    }
+    
+    public static byte[] buildAdminLeftGamePacket(){
+        byte[] packet = new byte[2];
+        packet[0] = (byte)(packet.length - 1);
+        packet[1] = ADMIN_LEFT_GAME;
         return packet;
     }
     
