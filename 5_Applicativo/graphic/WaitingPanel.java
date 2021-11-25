@@ -49,7 +49,7 @@ implements Addable{
             jTextArea1.setText((String)o);
         }else if(parameter.equals("start game")){
             this.frame.removePanel();
-            this.frame.addPanel(new GamePanel(this.frame));
+            this.frame.addPanel(new GamePanel(this.frame, this.playerList));
         }else if(parameter.equals("leave game")){
             this.frame.removePanel();
             this.frame.addPanel(new MainPanel(this.frame, frame.getClient().getUsername()));

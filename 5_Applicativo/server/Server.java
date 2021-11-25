@@ -29,7 +29,7 @@ public class Server {
                 pool.execute(clientThread);
             }
         } catch (IOException ex) {
-            System.out.printf("Port %d not supported\n", PORT);
+            System.out.printf("Port %d not supported or busy\n", PORT);
         }
     }
     

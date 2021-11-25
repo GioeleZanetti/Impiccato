@@ -66,6 +66,10 @@ public class Client {
         new Thread(serverConnection).start();
     }
     
+    public String getMaskedWord(){
+        return this.maskedWord;
+    }
+    
     public void setUsername(String username){
         this.userName = username;
     }
@@ -134,7 +138,11 @@ public class Client {
         } else if (this.errors < 10 && this.maskedWord.contains("*")) {
             sendLetter(msg);
         } else {
-            a.writeOnConsole("You have to wait until the end of the turn to play again!");
+            if(!isGraphic){
+                a.writeOnConsole("You have to wait until the end of the turn to play again!");
+            }else{
+                this.frame.getCurrentPanel().setData("You have to wait until the end of the turn to play again!", "error");
+            }
         }
     }
     
@@ -299,20 +307,20 @@ public class Client {
     private void endTurn() throws IOException {
         this.errors = 0;
         this.currentTurn++;
+        getPlayers();
+        printWord();
         if(!isGraphic){
-            getPlayers();
-            printWord();
             a.writeOnConsole("--------------------------------------------------------");
         }
         write(ProtocolCodes.buildRequestGameWordPacket(this.gameName));
     }
 
     private void endGame() throws IOException {
+        printWord();
         this.hasFinished = true;
         if(!isGraphic){
             a.writeOnConsole("Every player has finished the game!");
             getPlayers();
-            printWord();
         }else{
             this.frame.getCurrentPanel().setData(true, "end game");
         }
@@ -329,7 +337,11 @@ public class Client {
         setWord(new String(ProtocolCodes.getDataFromPacket(response)));
         setMaskedWord();
         if (hasStarted) {
-            printGameInfo();
+            if(!isGraphic){
+                printGameInfo();
+            }else{
+                this.frame.getCurrentPanel().setData(this.maskedWord, "masked word");
+            }
         }
     }
 
@@ -345,7 +357,12 @@ public class Client {
                 write(ProtocolCodes.buildPlayerLostPacket(gameName, userName));
             }
         }
-        printGameInfo();
+        if(!isGraphic){
+            printGameInfo();
+        }else{
+            this.frame.getCurrentPanel().setData(this.maskedWord, "masked word");
+        }
+        
         if (!maskedWord.contains("*")) {
             write(ProtocolCodes.buildPlayerWonPacket(gameName, userName));
         }
@@ -470,7 +487,11 @@ public class Client {
 
 
     private void printWord() {
-        a.writeOnConsole("The word was " + this.word + "!");
+        if(!isGraphic){
+            a.writeOnConsole("The word was " + this.word + "!");
+        }else{
+            frame.getCurrentPanel().setData(this.word, "word");
+        }
     }
 
 }
