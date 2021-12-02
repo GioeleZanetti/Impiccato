@@ -98,6 +98,9 @@ public class ClientHandler implements Runnable {
             case ProtocolCodes.FORCE_TURN_END:
                 forceTurnEnd(request);
                 break;
+            case ProtocolCodes.GET_LEADERBOARD:
+                getLeaderboard(request);
+                break;
             default:
                 System.out.println("Non conosco la richiesta " + request[0]);
                 break;
@@ -121,6 +124,11 @@ public class ClientHandler implements Runnable {
             }
         }
     };
+    
+    private void getLeaderboard(byte[] request) throws IOException{
+        String gameName = new String(ProtocolCodes.getDataFromPacket(request));
+        out.write(ProtocolCodes.buildPlayerListReturnedPacket(GameHoster.getLeaderboard(gameName)));
+    }
 
     private void deleteGame(byte[] request) {
         String requestGameToken = new String(ProtocolCodes.readFromTo(ProtocolCodes.getDataFromPacket(request), 0, 8));
@@ -267,7 +275,7 @@ public class ClientHandler implements Runnable {
         GameHoster.getGame(requestGameToken).addPlayer(userName);
         GameHoster.getGame(requestGameToken).setAdmin(userName);
         setGameToken(requestGameToken);
-        out.write(ProtocolCodes.buildGameCreatedSuccessfullyPacket(requestGameToken));
+        out.write(ProtocolCodes.buildGameCreatedSuccessfullyPacket(requestGameToken, GameHoster.getGame(requestGameToken).getLengthInSeconds()));
         System.out.printf("Creating %s, %d turns, %d length\n", requestGameToken, turns, length);
     }
 

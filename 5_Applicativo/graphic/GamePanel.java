@@ -1,29 +1,57 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+/**Pannello di gioco
+ *
+ * @author gioele.zanetti
+ * @version 11.11.2021
  */
+
 package graphic;
 
-import java.awt.Event;
-import java.awt.event.KeyAdapter;
+
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.IOException;
+import javax.swing.Timer;
+import javax.swing.Timer;
 
-/**
- *
- * @author gioele.zanetti
- */
 public class GamePanel extends javax.swing.JPanel 
 implements Addable, KeyListener{
 
+    /**
+     * Il frame che contiene il pannello
+     */
     private MainFrame frame;
+    
+    /**
+     * La lista dei giocatori
+     */
     private String playerList;
+    
+    /**
+     * La parola censurata
+     */
     private String word;
     
     /**
-     * Creates new form GamePanel
+     * La lunghezza del turno
+     */
+    private int time;
+    
+    /**
+     * Il tempo dall'inizio della partita
+     */
+    private int timePassed;
+    
+    /**
+     * Il timer che mostra il tempo rimanente
+     */
+    private Timer timer;
+    
+    /**
+     * Crea un nuovo form GamePanel
+     * @param frame il frame che contiene il panello
+     * @param playerList la lista dei giocatori
      */
     public GamePanel(MainFrame frame, String playerList) {
         initComponents();
@@ -33,13 +61,28 @@ implements Addable, KeyListener{
         this.word = frame.getClient().getMaskedWord();
         jTextField2.setText(word);
         jTextField5.addKeyListener(this);
+        this.timer = new Timer(1000, action);
+        this.time = frame.getClient().getLengthInSeconds();
+        timer.start();
     }    
+    
+    /**
+     * L'azione compiuta dal timer
+     */
+    ActionListener action = new ActionListener() {
+        public void actionPerformed(ActionEvent evt) {
+            timePassed++;
+            jTextField3.setText(Integer.toString((time - timePassed)));
+        }
+    };
     
     public void setData(Object o, String parameter) {
         if(parameter.equals("end game")){
+            timer.stop();
             frame.removePanel();
             frame.addPanel(new FinalPanel(this.frame));
         }else if(parameter.equals("masked word")){
+            this.timePassed = 0;
             this.word = (String)o;
             jTextField2.setText((String)o);
         }else if(parameter.equals("playerList")){
@@ -78,6 +121,7 @@ implements Addable, KeyListener{
 
         jTextField5.setText("Inserimento lettera");
 
+        jTextArea1.setEditable(false);
         jTextArea1.setColumns(20);
         jTextArea1.setRows(5);
         jScrollPane1.setViewportView(jTextArea1);
@@ -144,6 +188,10 @@ implements Addable, KeyListener{
     @Override
     public void keyPressed(KeyEvent e) {}
 
+    /**
+     * Evento che ascolta quando viene rilasciato il tasto invio
+     * @param e l'evento della tastiera
+     */
     @Override
     public void keyReleased(KeyEvent e) {
         if(e.getKeyCode() == '\n'){

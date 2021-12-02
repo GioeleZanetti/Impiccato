@@ -1,33 +1,31 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-package graphic;
-
-import java.io.IOException;
-
-/**
+/**Pannello finale
  *
  * @author gioele.zanetti
+ * @version 11.11.2021
  */
+
+package graphic;
+
 public class FinalPanel extends javax.swing.JPanel 
 implements Addable{
 
+    /**
+     * Il frame che contiene il pannello
+     */
     private MainFrame frame;
+    
+    /**
+     * La lista dei giocatori
+     */
     private String playerList;
     
     /**
-     * Creates new form FinalPanel
+     * Crea uin nuovo form FinalPanel
+     * @param frame il frame che contiene il panello
      */
     public FinalPanel(MainFrame frame) {
         initComponents();
         this.frame = frame;
-        try{
-            this.frame.getClient().elaborateRequest("get players");
-        }catch(IOException ioe){
-            
-        }
     }
     
     public void setData(Object o, String parameter) {

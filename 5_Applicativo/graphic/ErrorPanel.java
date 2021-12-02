@@ -1,19 +1,16 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-package graphic;
-
-/**
+/**Pannello che viene mostrato qunado il server non è disponibile
  *
  * @author gioele.zanetti
+ * @version 11.11.2021
  */
+
+package graphic;
+
 public class ErrorPanel extends javax.swing.JPanel 
 implements Addable{
 
     /**
-     * Creates new form ErrorPanel
+     * Crea un nuovo form ErrorPanel
      */
     public ErrorPanel() {
         initComponents();

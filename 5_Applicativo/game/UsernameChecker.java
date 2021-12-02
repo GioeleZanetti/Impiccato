@@ -1,7 +1,8 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+/**Classe per controllare l'username inserito
+ * dai giocatori
+ *
+ * @author gioele.zanetti
+ * @version 17 set 2021
  */
 package game;
 
@@ -9,12 +10,16 @@ import java.nio.file.*;
 import java.io.*;
 import java.util.List;
 
-/**
- *
- * @author gioele.zanetti
- */
 public class UsernameChecker {
     
+    /**
+     * Controlla che un unsername sia valido
+     * Non deve contenere parolacce e non deve essere
+     * più lungo di 20 carateri
+     * @param username il nome inserito dall'utente
+     * @return true se il nome è valido
+     * @throws IllegalArgumentException se il nome non è valido
+     */
     public static boolean isUsernameValid(String username) 
     throws IllegalArgumentException{
         try{
@@ -31,6 +36,12 @@ public class UsernameChecker {
         }
     }
     
+    /**
+     * Controlla che il nome utente non contenga parolaccie
+     * @param words le parolacce
+     * @param word l'username
+     * @return true se contiene parolacce, false altrimenti
+     */
     private static boolean containsBadWords(List<String> words, String word){
         for(int i=0;i<words.size();i++){
             if(word.toLowerCase().contains(words.get(i))){

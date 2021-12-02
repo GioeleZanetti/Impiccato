@@ -1,23 +1,24 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+/**Pannello di creazione partita
+ *
+ * @author gioele.zanetti
+ * @version 11.11.2021
  */
+
 package graphic;
 
 import java.io.IOException;
 
-/**
- *
- * @author gioele.zanetti
- */
 public class CreateGamePanel extends javax.swing.JPanel 
 implements Addable{
 
+    /**
+     * Il from che contiene il pannello
+     */
     private MainFrame frame;
     
     /**
-     * Creates new form CreateGamePanel
+     * Crea un nuovo form CreateGamePanel
+     * @param frame il frame che contiene il panello
      */
     public CreateGamePanel(MainFrame frame) {
         initComponents();
