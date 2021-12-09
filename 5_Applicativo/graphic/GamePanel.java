@@ -1,31 +1,115 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-package graphic;
-
-/**
+/**Pannello di gioco
  *
  * @author gioele.zanetti
+ * @version 11.11.2021
  */
-public class GamePanel extends javax.swing.JPanel 
-implements Addable{
 
+package graphic;
+
+
+import application.MainFrame;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.io.IOException;
+import javax.swing.Timer;
+import javax.swing.Timer;
+
+public class GamePanel extends javax.swing.JPanel 
+implements Addable, KeyListener{
+
+    /**
+     * Il frame che contiene il pannello
+     */
     private MainFrame frame;
     
     /**
-     * Creates new form GamePanel
+     * La lista dei giocatori
      */
-    public GamePanel(MainFrame frame) {
+    private String playerList;
+    
+    /**
+     * La parola censurata
+     */
+    private String word;
+    
+    /**
+     * La lunghezza del turno
+     */
+    private int time;
+    
+    /**
+     * Il tempo dall'inizio della partita
+     */
+    private int timePassed;
+    
+    /**
+     * Il timer che mostra il tempo rimanente
+     */
+    private Timer timer;
+    
+    /**
+     * Gli errori compiuti dal giocatore
+     */
+    private int errors;
+    
+    /**
+     * Crea un nuovo form GamePanel
+     * @param frame il frame che contiene il panello
+     * @param playerList la lista dei giocatori
+     */
+    public GamePanel(MainFrame frame, String playerList) {
         initComponents();
         this.frame = frame;
-    }
+        this.playerList = playerList;
+        jTextArea1.setText(playerList);
+        this.word = frame.getClient().getMaskedWord();
+        jTextField2.setText(word);
+        jTextField5.addKeyListener(this);
+        this.timer = new Timer(1000, action);
+        this.time = frame.getClient().getLengthInSeconds();
+        this.errors = 0;
+        jTextField1.setText(Integer.toString(errors));
+        timer.start();
+    }    
+    
+    /**
+     * L'azione compiuta dal timer
+     */
+    ActionListener action = new ActionListener() {
+        public void actionPerformed(ActionEvent evt) {
+            timePassed++;
+            jTextField3.setText(Integer.toString((time - timePassed)));
+        }
+    };
     
     public void setData(Object o, String parameter) {
         if(parameter.equals("end game")){
+            timer.stop();
             frame.removePanel();
             frame.addPanel(new FinalPanel(this.frame));
+        }else if(parameter.equals("masked word")){
+            this.word = (String)o;
+            jTextField2.setText((String)o);
+        }else if(parameter.equals("playerList")){
+            this.playerList = (String)o;
+            jTextArea1.setText((String)o);
+        }else if(parameter.equals("error")){
+            jLabel1.setText((String)o);
+        }else if(parameter.equals("word")){
+            jTextArea2.append("The word was " + (String)o + "!\n");
+        }else if(parameter.equals("end turn")){
+            timer.stop();
+            this.errors = 0;
+            this.timePassed = 0;
+            jTextField1.setText("0");
+            timer.start();
+        }else if(parameter.equals("errors")){
+            this.errors = (int)o;
+            jTextField1.setText(Integer.toString(errors));
+        }else if(parameter.equals("message")){
+            jTextArea2.append((String)o + "\n");
         }
     }
 
@@ -38,14 +122,15 @@ implements Addable{
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jTextField1 = new javax.swing.JTextField();
         jTextField2 = new javax.swing.JTextField();
         jTextField3 = new javax.swing.JTextField();
-        jTextField4 = new javax.swing.JTextField();
         jTextField5 = new javax.swing.JTextField();
-
-        jTextField1.setEditable(false);
-        jTextField1.setText("Lista giocatori");
+        jScrollPane1 = new javax.swing.JScrollPane();
+        jTextArea1 = new javax.swing.JTextArea();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        jTextArea2 = new javax.swing.JTextArea();
+        jLabel1 = new javax.swing.JLabel();
+        jTextField1 = new javax.swing.JTextField();
 
         jTextField2.setEditable(false);
         jTextField2.setText("Parola");
@@ -53,10 +138,19 @@ implements Addable{
         jTextField3.setEditable(false);
         jTextField3.setText("Tempo rimanente");
 
-        jTextField4.setEditable(false);
-        jTextField4.setText("Chat");
-
         jTextField5.setText("Inserimento lettera");
+
+        jTextArea1.setEditable(false);
+        jTextArea1.setColumns(20);
+        jTextArea1.setRows(5);
+        jScrollPane1.setViewportView(jTextArea1);
+
+        jTextArea2.setColumns(20);
+        jTextArea2.setRows(5);
+        jScrollPane2.setViewportView(jTextArea2);
+
+        jTextField1.setEditable(false);
+        jTextField1.setText("Errori");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -64,16 +158,22 @@ implements Addable{
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGap(18, 18, 18)
-                .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, 106, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jTextField2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jTextField3, javax.swing.GroupLayout.PREFERRED_SIZE, 162, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(jTextField4)
-                    .addComponent(jTextField5))
-                .addContainerGap(26, Short.MAX_VALUE))
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(60, 60, 60)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(jScrollPane2)
+                            .addComponent(jTextField5)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(jTextField2, javax.swing.GroupLayout.PREFERRED_SIZE, 85, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(18, 18, 18)
+                                .addComponent(jTextField3, javax.swing.GroupLayout.PREFERRED_SIZE, 66, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, 1, Short.MAX_VALUE)))
+                        .addGap(12, 12, 12)))
+                .addContainerGap(75, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -83,22 +183,51 @@ implements Addable{
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(jTextField2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jTextField3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(18, 18, 18)
-                        .addComponent(jTextField4, javax.swing.GroupLayout.PREFERRED_SIZE, 109, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jTextField3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(26, 26, 26)
+                        .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 215, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(jTextField5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, 189, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(69, Short.MAX_VALUE))
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 308, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(41, 41, 41)
+                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 18, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(124, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JTextArea jTextArea1;
+    private javax.swing.JTextArea jTextArea2;
     private javax.swing.JTextField jTextField1;
     private javax.swing.JTextField jTextField2;
     private javax.swing.JTextField jTextField3;
-    private javax.swing.JTextField jTextField4;
     private javax.swing.JTextField jTextField5;
     // End of variables declaration//GEN-END:variables
+
+    @Override
+    public void keyTyped(KeyEvent e) {}
+
+    @Override
+    public void keyPressed(KeyEvent e) {}
+
+    /**
+     * Evento che ascolta quando viene rilasciato il tasto invio
+     * @param e l'evento della tastiera
+     */
+    @Override
+    public void keyReleased(KeyEvent e) {
+        if(e.getKeyCode() == '\n'){
+            try{
+                this.frame.getClient().elaborateRequest(jTextField5.getText());
+                jTextField5.setText("");
+            }catch(IOException ioe){
+                return;
+            }
+        }
+    }
 }

@@ -1,21 +1,31 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-package graphic;
-
-/**
+/**Pannello delle impostazioni
  *
  * @author gioele.zanetti
+ * @version 11.11.2021
  */
-public class SettingsPanel extends javax.swing.JPanel {
+
+package graphic;
+
+import application.MainFrame;
+
+public class SettingsPanel extends javax.swing.JPanel 
+implements Addable{
 
     /**
-     * Creates new form SettingsPanel
+     * Frame principale
      */
-    public SettingsPanel() {
+    private MainFrame frame;
+    
+    /**
+     * Crea un nuovo SettingsPanel
+     */
+    public SettingsPanel(MainFrame frame) {
         initComponents();
+        this.frame = frame;
+    }
+    
+    public void setData(Object o, String parameter){
+        
     }
 
     /**
@@ -41,7 +51,12 @@ public class SettingsPanel extends javax.swing.JPanel {
 
         jTextField2.setText("Porta");
 
-        jButton1.setText("Torna alla schermata principale");
+        jButton1.setText("Vai alla schermata principale");
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -61,7 +76,7 @@ public class SettingsPanel extends javax.swing.JPanel {
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(jTextField1)
                             .addComponent(jTextField2, javax.swing.GroupLayout.PREFERRED_SIZE, 111, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                .addContainerGap(104, Short.MAX_VALUE))
+                .addContainerGap(117, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -79,6 +94,16 @@ public class SettingsPanel extends javax.swing.JPanel {
                 .addContainerGap(65, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
+
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        try{
+            String ip = jTextField1.getText();
+            int port = Integer.parseInt(jTextField2.getText());
+            this.frame.setClient(port, ip);
+        }catch(NumberFormatException nfe){
+            
+        }
+    }//GEN-LAST:event_jButton1ActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
