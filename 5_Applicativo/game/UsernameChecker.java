@@ -17,10 +17,9 @@ public class UsernameChecker {
      * Non deve contenere parolacce e non deve essere
      * più lungo di 20 carateri
      * @param username il nome inserito dall'utente
-     * @return true se il nome è valido
      * @throws IllegalArgumentException se il nome non è valido
      */
-    public static boolean isUsernameValid(String username) 
+    public static void validateUsername(String username) 
     throws IllegalArgumentException{
         try{
             List<String> badWords = Files.readAllLines(Paths.get("files","badwords.txt"));
@@ -28,11 +27,9 @@ public class UsernameChecker {
                 throw new IllegalArgumentException("Name contains words that are not allowed");
             }else if(username.length() > 20){
                 throw new IllegalArgumentException("Name must contain a maximum of 20 characters");
-            }else{
-                return true;
             }
         }catch(IOException ioe){
-            return false;
+            return;
         }
     }
     

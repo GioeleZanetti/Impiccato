@@ -74,13 +74,17 @@ public class Game {
         this.hasStarted = false;
         this.word = Word.getRandomWord();
         this.admin = "";
-        if(lengthInSeconds > 300 || lengthInSeconds < 30)
-            lengthInSeconds = 60;
+        if(lengthInSeconds < 30)
+            lengthInSeconds = 30;
+        else if(lengthInSeconds > 200)
+            lengthInSeconds = 200;
         this.LENGTH_IN_SECONDS = lengthInSeconds;
         this.beginning = 0;
         this.turn = 0;
-        if(turns > 10 || turns < 0)
+        if(turns < 0)
             turns = 2;
+        else if(turns > 10)
+            turns = 10;
         this.TURN_NUMBER = turns;
     }
     

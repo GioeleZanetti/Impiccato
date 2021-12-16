@@ -4,17 +4,20 @@
  * @version 11.11.2021
  */
 
-package graphic;
+package application;
 
-import application.App;
 import client.Client;
+import graphic.Addable;
+import graphic.ErrorPanel;
+import graphic.MainPanel;
 import java.awt.BorderLayout;
 import static java.awt.BorderLayout.CENTER;
 import java.io.IOException;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
-public class MainFrame extends JFrame{
+public class MainFrame extends JFrame
+implements Playable{
     
     /**
      * Il client corrente
@@ -32,13 +35,13 @@ public class MainFrame extends JFrame{
     public MainFrame() {
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setSize(400, 500);
-        this.addPanel(new MainPanel(this));
+        //this.addPanel(new MainPanel(this));
         this.setResizable(false);
         try {
             c = new Client(this);
         } catch (IOException ex) {
             removePanel();
-            addPanel(new ErrorPanel());
+            addPanel(new ErrorPanel(this));
         }
     }
 
@@ -87,15 +90,30 @@ public class MainFrame extends JFrame{
     }
 
     /**
-     * Main
-     * @param args aregomenti da linea di comando
+     * Imposta il client
+     * @param port la porta del server
+     * @param ip l'ip del server
      */
-    public static void main(String args[]) {
-        
+    public void setClient(int port, String ip){
+        try {
+            System.out.printf("trying %s on %d...\n", ip, port);
+            c = new Client(this, null, port, ip);
+            removePanel();
+            addPanel(new MainPanel(this));
+        } catch (IOException ex) {
+            removePanel();
+            addPanel(new ErrorPanel(this));
+        }
+    }
+    
+    @Override
+    public void play(){
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new MainFrame().setVisible(true);
+                MainFrame frame = new MainFrame();
+                frame.setVisible(true);
+                frame.addPanel(new MainPanel(frame));
             }
         });
-    }  
+    }
 }

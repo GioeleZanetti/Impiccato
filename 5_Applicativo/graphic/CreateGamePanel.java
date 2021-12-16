@@ -6,6 +6,7 @@
 
 package graphic;
 
+import application.MainFrame;
 import java.io.IOException;
 
 public class CreateGamePanel extends javax.swing.JPanel 

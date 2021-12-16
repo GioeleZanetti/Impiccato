@@ -7,6 +7,7 @@
 
 package graphic;
 
+import application.MainFrame;
 import java.io.IOException;
 
 public class WaitingPanel extends javax.swing.JPanel 
@@ -26,6 +27,11 @@ implements Addable{
      * Il token della partita
      */
     private String gameToken;
+    
+    /**
+     * La lunghezza di un turno in secondi
+     */
+    private int lengthInSeconds;
     
     /**
      * Crea un nuovo WaitingPanel
@@ -61,7 +67,7 @@ implements Addable{
             }
         }else if(parameter.equals("playerList")){
             this.playerList = (String)o;
-            jTextArea1.setText((String)o);
+            jList1.setListData(((String)o).split("\n"));
         }else if(parameter.equals("start game")){
             this.frame.removePanel();
             this.frame.addPanel(new GamePanel(this.frame, this.playerList));
@@ -70,7 +76,7 @@ implements Addable{
             this.frame.addPanel(new MainPanel(this.frame, frame.getClient().getUsername()));
         }else if(parameter.equals("adminLeft")){
             jLabel1.setText("Admin left the game, please leave the game!");
-            jTextArea1.setText("");
+            jList1.setListData(new String[0]);
         }
     }
 
@@ -86,9 +92,9 @@ implements Addable{
         jTextField1 = new javax.swing.JTextField();
         jButton1 = new javax.swing.JButton();
         jButton2 = new javax.swing.JButton();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        jTextArea1 = new javax.swing.JTextArea();
         jLabel1 = new javax.swing.JLabel();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        jList1 = new javax.swing.JList<>();
 
         jTextField1.setEditable(false);
 
@@ -106,10 +112,7 @@ implements Addable{
             }
         });
 
-        jTextArea1.setEditable(false);
-        jTextArea1.setColumns(20);
-        jTextArea1.setRows(5);
-        jScrollPane1.setViewportView(jTextArea1);
+        jScrollPane2.setViewportView(jList1);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -122,25 +125,25 @@ implements Addable{
                         .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, 111, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
                         .addGap(82, 82, 82)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 237, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(jButton1)
                                 .addGap(20, 20, 20)
                                 .addComponent(jButton2))
-                            .addComponent(jLabel1))))
-                .addContainerGap(81, Short.MAX_VALUE))
+                            .addComponent(jLabel1)
+                            .addComponent(jScrollPane2))))
+                .addContainerGap(60, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGap(20, 20, 20)
                 .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(28, 28, 28)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 141, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
+                .addGap(23, 23, 23)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 153, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel1)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 25, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 30, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jButton1)
                     .addComponent(jButton2))
@@ -171,8 +174,8 @@ implements Addable{
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JTextArea jTextArea1;
+    private javax.swing.JList<String> jList1;
+    private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JTextField jTextField1;
     // End of variables declaration//GEN-END:variables
 }

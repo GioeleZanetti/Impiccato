@@ -12,18 +12,47 @@ import java.net.Socket;
 import java.util.List;
 import protocol.ProtocolCodes;
 import java.awt.event.*;
-import java.io.BufferedReader;
 import javax.swing.*;
 
 public class ClientHandler implements Runnable {
 
+    /**
+     * Il socket con il client
+     */
     private Socket client;
+    
+    /**
+     * Lo stream di output con il client
+     */
     private DataOutputStream out;
+    
+    /**
+     * Lo stream in input con il client
+     */
     private DataInputStream in;
+    
+    /**
+     * La lista con tutti i client connessi
+     */
     private List<ClientHandler> clients;
+    
+    /**
+     * Il token della partita attuale
+     */
     private String gameToken;
+    
+    /**
+     * Il timer che regola la durata dei turni
+     */
     private Timer timer;
 
+    /**
+     * Crea un nuovo oggetto ClientHandler
+     * @param client il socket con il client
+     * @param clients la lista di tutti i client
+     * @throws IOException eccezione generata se la comunicazione con il client
+     * non va a buon fine
+     */
     public ClientHandler(Socket client, List<ClientHandler> clients) throws IOException {
         this.client = client;
         this.clients = clients;
@@ -35,10 +64,18 @@ public class ClientHandler implements Runnable {
 
     }
 
+    /**
+     * Metodo per impostare il token della partita
+     * @param gameToken il token della partita
+     */
     private void setGameToken(String gameToken) {
         this.gameToken = gameToken;
     }
 
+    /**
+     * Metodo per ritornare il token della partita
+     * @return il token della partita
+     */
     private String getGameToken() {
         return gameToken;
     }
@@ -47,11 +84,17 @@ public class ClientHandler implements Runnable {
     public void run() {
         try {
             int current;
+            //leggo quanti byte devo leggere
             while ((current = in.read()) != -1) {
                 byte[] packet = new byte[current];
+                //leggo il numero di byte specificato
                 in.read(packet, 0, current);
-
+                //elaboro la richiesta
                 elaborateRequest(packet);
+                //controllo se la thread è stata fermata
+                if(Thread.interrupted()){
+                    return;
+                }
             }
         } catch (IOException ex) {
             try {
@@ -62,6 +105,12 @@ public class ClientHandler implements Runnable {
         }
     }
 
+    /**
+     * Metodo che gestisce le richieste dal client
+     * @param request la richiesta del client
+     * @throws IOException eccezione generata se la comunicazione con il client
+     * non va a buon fine
+     */
     private void elaborateRequest(byte[] request) throws IOException {
         switch (request[0]) {
             case ProtocolCodes.CREATE_GAME:
@@ -107,6 +156,10 @@ public class ClientHandler implements Runnable {
         }
     }
 
+    /**
+     * Ferma il timer per poi farlo ripartire
+     * @param length il tempo da aspettare
+     */
     private void setTimer(int length) {
         timer.stop();
         this.timer = new Timer(length * 1000, action);
@@ -114,6 +167,9 @@ public class ClientHandler implements Runnable {
         this.timer.start();
     }
 
+    /**
+     * L'azione da compiere quando il timer finisce
+     */
     ActionListener action = new ActionListener() {
         public void actionPerformed(ActionEvent evt) {
             try {
@@ -125,11 +181,21 @@ public class ClientHandler implements Runnable {
         }
     };
     
+    /**
+     * Metodo utile a ottenere la classifica di
+     * una partita
+     * @param request la richiesta del client
+     * @throws IOException 
+     */
     private void getLeaderboard(byte[] request) throws IOException{
         String gameName = new String(ProtocolCodes.getDataFromPacket(request));
         out.write(ProtocolCodes.buildPlayerListReturnedPacket(GameHoster.getLeaderboard(gameName)));
     }
 
+    /**
+     * Metodo per eliminare una partita
+     * @param request la richiesta del client
+     */
     private void deleteGame(byte[] request) {
         String requestGameToken = new String(ProtocolCodes.readFromTo(ProtocolCodes.getDataFromPacket(request), 0, 8));
         var game = GameHoster.getGame(requestGameToken);
@@ -139,6 +205,10 @@ public class ClientHandler implements Runnable {
         }
     }
 
+    /**
+     * Metodo per aggiungere un errore al counter di un giocatore
+     * @param request la richiesta del client
+     */
     private void addError(byte[] request) {
         String requestGameToken = new String(ProtocolCodes.readFromTo(ProtocolCodes.getDataFromPacket(request), 0, 8));
         String playerName = new String(ProtocolCodes.readFromTo(ProtocolCodes.getDataFromPacket(request), 8, request.length - 1));
@@ -148,6 +218,13 @@ public class ClientHandler implements Runnable {
         }
     }
 
+    /**
+     * Metodo per indicare se un giocatore ha vinto o
+     * perso un turno
+     * @param request la richiesta del client
+     * @throws IOException eccezione generata se la comunicazione con il client
+     * non va a buon fine
+     */
     private void playerLostOrWonTurn(byte[] request) throws IOException {
         String requestGameToken = new String(ProtocolCodes.readFromTo(ProtocolCodes.getDataFromPacket(request), 0, 8));
         String playerName = new String(ProtocolCodes.readFromTo(ProtocolCodes.getDataFromPacket(request), 8, request.length - 1));
@@ -155,7 +232,6 @@ public class ClientHandler implements Runnable {
         if (game != null) {
             if (game.getPlayer(playerName) != null) {
                 game.getPlayer(playerName).setHasFinished(true);
-                //timer.stop
                 game.addPointsToPlayer(playerName);
                 if (request[0] == ProtocolCodes.PLAYER_WON_TURN) {
                     broadcastToGame(requestGameToken, ProtocolCodes.buildNotifyPlayerWonTurnPacket(playerName));
@@ -170,11 +246,15 @@ public class ClientHandler implements Runnable {
             } else if (game.gameEnd()) {
                 broadcastToGame(requestGameToken, ProtocolCodes.buildEndGamePacket());
             }
-            System.out.println("Fermo timer");
-
         }
     }
 
+    /**
+     * Metodo per forzare la fine del turno
+     * @param request la richiesta del client
+     * @throws IOException eccezione generata se la comunicazione con il client
+     * non va a buon fine
+     */
     private void forceTurnEnd(byte[] request) throws IOException {
         String requestGameToken = new String(ProtocolCodes.readFromTo(ProtocolCodes.getDataFromPacket(request), 0, 8));
         var game = GameHoster.getGame(requestGameToken);
@@ -188,9 +268,15 @@ public class ClientHandler implements Runnable {
                 broadcastToGame(requestGameToken, ProtocolCodes.buildEndGamePacket());
             }
         }
-
     }
 
+    /**
+     * Metodo per ritornare la parola corrente
+     * al client
+     * @param request la richiesta del client
+     * @throws IOException eccezione generata se la comunicazione con il client
+     * non va a buon fine
+     */
     private void requestGameWord(byte[] request) throws IOException {
         String requestGameToken = new String(ProtocolCodes.getDataFromPacket(request));
         var game = GameHoster.getGame(requestGameToken);
@@ -199,6 +285,13 @@ public class ClientHandler implements Runnable {
         }
     }
 
+    /**
+     * Metodo per controllare se la lettera inviata 
+     * dal client è corretta
+     * @param request la richiesta del client
+     * @throws IOException eccezione generata se la comunicazione con il client
+     * non va a buon fine
+     */
     private void sendLetter(byte[] request) throws IOException {
         String requestGameToken = new String(ProtocolCodes.readFromTo(ProtocolCodes.getDataFromPacket(request), 0, 8));
         var game = GameHoster.getGame(requestGameToken);
@@ -209,6 +302,12 @@ public class ClientHandler implements Runnable {
         }
     }
 
+    /**
+     * Metodo per far cominciare una partita
+     * @param request la richiesta del client
+     * @throws IOException eccezione generata se la comunicazione con il client
+     * non va a buon fine
+     */
     private void startGame(byte[] request) throws IOException {
         String requestGameToken = new String(ProtocolCodes.readFromTo(ProtocolCodes.getDataFromPacket(request), 0, 8));
         String userName = new String(ProtocolCodes.readFromTo(ProtocolCodes.getDataFromPacket(request), 8, request.length - 1));
@@ -221,6 +320,12 @@ public class ClientHandler implements Runnable {
         }
     }
 
+    /**
+     * Metodo per lasciare una partita
+     * @param request la richiesta del client
+     * @throws IOException eccezione generata se la comunicazione con il client
+     * non va a buon fine
+     */
     private void leaveGame(byte[] request) throws IOException {
         String requestGameToken = new String(ProtocolCodes.readFromTo(ProtocolCodes.getDataFromPacket(request), 0, 8));
         var game = GameHoster.getGame(requestGameToken);
@@ -242,11 +347,24 @@ public class ClientHandler implements Runnable {
         }
     }
 
+    /**
+     * Metodo per ritornare la lista dei giocatori
+     * di una partita
+     * @param requestla richiesta del client
+     * @throws IOException eccezione generata se la comunicazione con il client
+     * non va a buon fine
+     */
     private void getPlayerList(byte[] request) throws IOException {
         String gameName = new String(ProtocolCodes.getDataFromPacket(request));
         out.write(ProtocolCodes.buildPlayerListReturnedPacket(GameHoster.getGameList(gameName)));
     }
 
+    /**
+     * Metodo per entrare in una partita
+     * @param request la richiesta del client
+     * @throws IOException eccezione generata se la comunicazione con il client
+     * non va a buon fine
+     */
     private void joinGame(byte[] request) throws IOException {
         String requestGameToken = new String(ProtocolCodes.readFromTo(ProtocolCodes.getDataFromPacket(request), 0, 8));
         String userName = new String(ProtocolCodes.readFromTo(ProtocolCodes.getDataFromPacket(request), 8, request.length - 1));
@@ -256,7 +374,7 @@ public class ClientHandler implements Runnable {
                 setGameToken(requestGameToken);
                 game.addPlayer(userName);
                 System.out.printf("Player %s joined game %s\n", userName, requestGameToken);
-                out.write(ProtocolCodes.buildGameJoinedSuccessfullyPacket(requestGameToken));
+                out.write(ProtocolCodes.buildGameJoinedSuccessfullyPacket(requestGameToken, GameHoster.getGame(requestGameToken).getLengthInSeconds()));
                 broadcastToGame(requestGameToken, ProtocolCodes.buildPlayerJoinedGamePacket(userName));
             } else {
                 out.write(ProtocolCodes.buildUsernameAlreadyUsedPacket());
@@ -266,6 +384,12 @@ public class ClientHandler implements Runnable {
         }
     }
 
+    /**
+     * Metodo per creare una partita
+     * @param request la richiesta del client
+     * @throws IOException eccezione generata se la comunicazione con il client
+     * non va a buon fine
+     */
     private void createGame(byte[] request) throws IOException {
         String requestGameToken = GameHoster.generateRandomGameName();
         int turns = ProtocolCodes.readFromTo(ProtocolCodes.getDataFromPacket(request), 0, 1)[0];
@@ -279,6 +403,14 @@ public class ClientHandler implements Runnable {
         System.out.printf("Creating %s, %d turns, %d length\n", requestGameToken, turns, length);
     }
 
+    /**
+     * Metodo per mandare il broadcast ai client che fanno
+     * parte della stessa partita un pacchetto
+     * @param gameToken il token della partita
+     * @param packet il pacchetto da inviare
+     * @throws IOException eccezione generata se la comunicazione con il client
+     * non va a buon fine
+     */
     private void broadcastToGame(String gameToken, byte[] packet) throws IOException {
         for (ClientHandler c : clients) {
             if (c.getGameToken().equals(gameToken)) {

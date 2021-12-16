@@ -5,6 +5,7 @@
  */
 package graphic;
 
+import application.MainFrame;
 import application.App;
 import client.Client;
 import game.UsernameChecker;
@@ -62,7 +63,7 @@ implements Addable{
         jButton1 = new javax.swing.JButton();
         jButton2 = new javax.swing.JButton();
         jTextField2 = new javax.swing.JTextField();
-        jButton3 = new javax.swing.JButton();
+        jLabel1 = new javax.swing.JLabel();
 
         jTextField1.setText("Username");
 
@@ -82,8 +83,6 @@ implements Addable{
 
         jTextField2.setText("Token");
 
-        jButton3.setText("Impostazioni");
-
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -93,14 +92,15 @@ implements Addable{
                     .addGroup(layout.createSequentialGroup()
                         .addGap(124, 124, 124)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(jTextField1)
-                            .addComponent(jButton1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(jButton2, javax.swing.GroupLayout.DEFAULT_SIZE, 150, Short.MAX_VALUE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                            .addComponent(jTextField1, javax.swing.GroupLayout.DEFAULT_SIZE, 142, Short.MAX_VALUE)
+                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                                .addComponent(jButton2, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 1, Short.MAX_VALUE)
+                                .addComponent(jButton1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 142, Short.MAX_VALUE)))
+                        .addGap(14, 14, 14)
                         .addComponent(jTextField2, javax.swing.GroupLayout.PREFERRED_SIZE, 92, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(jButton3)))
+                        .addGap(35, 35, 35)
+                        .addComponent(jLabel1)))
                 .addContainerGap(28, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
@@ -108,37 +108,44 @@ implements Addable{
             .addGroup(layout.createSequentialGroup()
                 .addGap(15, 15, 15)
                 .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(53, 53, 53)
+                .addGap(77, 77, 77)
                 .addComponent(jButton1)
                 .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jButton2)
                     .addComponent(jTextField2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 120, Short.MAX_VALUE)
-                .addComponent(jButton3)
-                .addContainerGap())
+                .addGap(47, 47, 47)
+                .addComponent(jLabel1)
+                .addContainerGap(77, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         if(!jTextField1.getText().isBlank() && !jTextField1.getText().isEmpty()
-        && !jTextField2.getText().isBlank() && !jTextField2.getText().isEmpty()
-        && UsernameChecker.isUsernameValid(jTextField1.getText())){
-            frame.setUsername(jTextField1.getText());
-            this.frame.removePanel();
-            this.frame.addPanel(new CreateGamePanel(this.frame));
+        && !jTextField2.getText().isBlank() && !jTextField2.getText().isEmpty()){
+            try{
+                UsernameChecker.validateUsername(jTextField1.getText());
+                frame.setUsername(jTextField1.getText());
+                this.frame.removePanel();
+                this.frame.addPanel(new CreateGamePanel(this.frame));
+            }catch(IllegalArgumentException iae){
+                jLabel1.setText(iae.getMessage());
+            }
         }
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
         if(!jTextField1.getText().isBlank() && !jTextField1.getText().isEmpty()
-        && !jTextField2.getText().isBlank() && !jTextField2.getText().isEmpty()
-        && UsernameChecker.isUsernameValid(jTextField1.getText())){
-            frame.setUsername(jTextField1.getText());
+        && !jTextField2.getText().isBlank() && !jTextField2.getText().isEmpty()){
+            
             try {
+                UsernameChecker.validateUsername(jTextField1.getText());
+                frame.setUsername(jTextField1.getText());
                 frame.getClient().elaborateRequest("join game " + jTextField2.getText());
             } catch (IOException ex) {
                 
+            } catch (IllegalArgumentException iae){
+                jLabel1.setText(iae.getMessage());
             }
         }
     }//GEN-LAST:event_jButton2ActionPerformed
@@ -147,7 +154,7 @@ implements Addable{
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
-    private javax.swing.JButton jButton3;
+    private javax.swing.JLabel jLabel1;
     private javax.swing.JTextField jTextField1;
     private javax.swing.JTextField jTextField2;
     // End of variables declaration//GEN-END:variables

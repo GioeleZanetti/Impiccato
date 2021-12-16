@@ -9,7 +9,7 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.net.Socket;
 
-public class ServerHandler implements  Runnable{
+public class ServerHandler implements Runnable{
     
     /**
      * Il socket con il server
