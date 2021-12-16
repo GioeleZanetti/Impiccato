@@ -5,11 +5,13 @@
 package client;
 
 import application.App;
+import game.GameHoster;
 import game.UsernameChecker;
-import application.MainFrame;
+import graphic.MainFrame;
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.lang.invoke.VarHandle;
 import java.net.Socket;
 import protocol.ProtocolCodes;
 
@@ -109,7 +111,20 @@ public class Client {
      * @throws IOException eccezione sollevata se socket non disponibile
      */
     public Client(App a) throws IOException {
-        this(null, a, 3000, "127.0.0.1");
+        server = new Socket(SERVER_IP, SERVER_PORT);
+        out = new DataOutputStream(server.getOutputStream());
+        this.a = a;
+        this.userName = "";
+        this.gameName = null;
+        this.hasStarted = false;
+        this.hasFinished = false;
+        this.word = null;
+        this.errors = 0;
+        this.currentTurn = 1;
+        this.isGraphic = false;
+        this.lengthInSeconds = 0;
+        serverConnection = new ServerHandler(server, this);
+        new Thread(serverConnection).start();
     }
     
     /**
@@ -118,27 +133,9 @@ public class Client {
      * @throws IOException eccezione sollevata se socket non disponibile
      */
     public Client(MainFrame frame) throws IOException {
-        this(frame, null, 3000, "127.0.0.1");
-    }
-    
-    /**
-     * Costruttore completo
-     * @param frame il frame di un app GUI
-     * @param app l'app per un app CLI
-     * @param serverPort la porta in cui ascolta il server
-     * @param serverIp l'ip del server
-     * @throws IOException eccezione sollevata se socket non disponibile
-     */
-    public Client(MainFrame frame, App app, int serverPort, String serverIp) throws IOException {
-        server = new Socket(serverIp, serverPort);
+        server = new Socket(SERVER_IP, SERVER_PORT);
         out = new DataOutputStream(server.getOutputStream());
-        if(frame != null){
-            this.frame = frame;
-            this.isGraphic = true;
-        }else{
-            this.a = app;
-            this.isGraphic = false;
-        }
+        this.frame = frame;
         this.userName = "";
         this.gameName = null;
         this.hasStarted = false;
@@ -146,6 +143,7 @@ public class Client {
         this.word = null;
         this.errors = 0;
         this.currentTurn = 1;
+        this.isGraphic = true;
         this.lengthInSeconds = 0;
         serverConnection = new ServerHandler(server, this);
         new Thread(serverConnection).start();
@@ -197,15 +195,6 @@ public class Client {
      */
     public int getLengthInSeconds(){
         return this.lengthInSeconds;
-    }
-    
-    /**
-     * Ritorna gli errori fatti dal giocatore nel
-     * turno corrente
-     * @return gli errori fatti dal giocatore
-     */
-    public int getErrors(){
-        return this.errors;
     }
 
     /**
@@ -284,8 +273,6 @@ public class Client {
                 startGame();
             } else if (msg.toLowerCase().contains("change username")) {
                 changeUsername(a.getKeyboard());
-            } else if(msg.equals("quit")){
-                System.exit(0);
             }
         } else if (this.errors < 10 && this.maskedWord.contains("*")) {
             sendLetter(msg);
@@ -527,8 +514,6 @@ public class Client {
         printWord();
         if(!isGraphic){
             a.writeOnConsole("--------------------------------------------------------");
-        }else{
-            this.frame.getCurrentPanel().setData(true, "end turn");
         }
         write(ProtocolCodes.buildRequestGameWordPacket(this.gameName));
     }
@@ -555,11 +540,8 @@ public class Client {
      * @param response la risposta del server
      */
     private void notifyTurnWonOrLost(byte[] response) {
-        String message = new String(ProtocolCodes.getDataFromPacket(response));
         if(!isGraphic){
-            a.writeOnConsole(message);
-        }else{
-            this.frame.getCurrentPanel().setData(message, "message");
+            a.writeOnConsole(new String(ProtocolCodes.getDataFromPacket(response)));
         }
     }
 
@@ -600,7 +582,6 @@ public class Client {
         if(!isGraphic){
             printGameInfo();
         }else{
-            this.frame.getCurrentPanel().setData(this.errors, "errors");
             this.frame.getCurrentPanel().setData(this.maskedWord, "masked word");
         }
         
@@ -670,6 +651,7 @@ public class Client {
         
         if (hasFinished) {
             setHasStarted(false);
+            //System.exit(0);
         }
     }
 
@@ -700,9 +682,7 @@ public class Client {
      * @throws IOException 
      */
     private void gameJoinedSuccessfully(byte[] response) throws IOException {
-        String gameToken = new String(ProtocolCodes.readFromTo(ProtocolCodes.getDataFromPacket(response), 0, response.length - 2));
-        byte length = ProtocolCodes.readFromTo(ProtocolCodes.getDataFromPacket(response), response.length - 2, response.length - 1)[0];
-        this.lengthInSeconds = length;
+        String gameToken = new String(ProtocolCodes.getDataFromPacket(response));
         setGameName(gameToken);
         if(!isGraphic){
             a.writeOnConsole("Game joined!");
@@ -748,12 +728,12 @@ public class Client {
      * @throws IOException eccezione sollevata se socket non disponibile
      */
     private void adminLeftGame() throws IOException{
-        gameName = null;
+        
         hasFinished = true;
         if(!isGraphic){
             a.writeOnConsole("Admin left the game, please leave the game!");
         }else{
-            this.frame.getCurrentPanel().setData(true, "adminLeft");
+            frame.getCurrentPanel().setData(true, "adminLeft");
         }
     }
 

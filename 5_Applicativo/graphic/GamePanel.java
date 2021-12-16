@@ -7,7 +7,6 @@
 package graphic;
 
 
-import application.MainFrame;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -50,11 +49,6 @@ implements Addable, KeyListener{
     private Timer timer;
     
     /**
-     * Gli errori compiuti dal giocatore
-     */
-    private int errors;
-    
-    /**
      * Crea un nuovo form GamePanel
      * @param frame il frame che contiene il panello
      * @param playerList la lista dei giocatori
@@ -69,8 +63,6 @@ implements Addable, KeyListener{
         jTextField5.addKeyListener(this);
         this.timer = new Timer(1000, action);
         this.time = frame.getClient().getLengthInSeconds();
-        this.errors = 0;
-        jTextField1.setText(Integer.toString(errors));
         timer.start();
     }    
     
@@ -90,6 +82,7 @@ implements Addable, KeyListener{
             frame.removePanel();
             frame.addPanel(new FinalPanel(this.frame));
         }else if(parameter.equals("masked word")){
+            this.timePassed = 0;
             this.word = (String)o;
             jTextField2.setText((String)o);
         }else if(parameter.equals("playerList")){
@@ -99,17 +92,6 @@ implements Addable, KeyListener{
             jLabel1.setText((String)o);
         }else if(parameter.equals("word")){
             jTextArea2.append("The word was " + (String)o + "!\n");
-        }else if(parameter.equals("end turn")){
-            timer.stop();
-            this.errors = 0;
-            this.timePassed = 0;
-            jTextField1.setText("0");
-            timer.start();
-        }else if(parameter.equals("errors")){
-            this.errors = (int)o;
-            jTextField1.setText(Integer.toString(errors));
-        }else if(parameter.equals("message")){
-            jTextArea2.append((String)o + "\n");
         }
     }
 
@@ -130,7 +112,6 @@ implements Addable, KeyListener{
         jScrollPane2 = new javax.swing.JScrollPane();
         jTextArea2 = new javax.swing.JTextArea();
         jLabel1 = new javax.swing.JLabel();
-        jTextField1 = new javax.swing.JTextField();
 
         jTextField2.setEditable(false);
         jTextField2.setText("Parola");
@@ -149,9 +130,6 @@ implements Addable, KeyListener{
         jTextArea2.setRows(5);
         jScrollPane2.setViewportView(jTextArea2);
 
-        jTextField1.setEditable(false);
-        jTextField1.setText("Errori");
-
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -164,16 +142,13 @@ implements Addable, KeyListener{
                         .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(60, 60, 60)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(jScrollPane2)
-                            .addComponent(jTextField5)
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(jTextField2, javax.swing.GroupLayout.PREFERRED_SIZE, 85, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(18, 18, 18)
-                                .addComponent(jTextField3, javax.swing.GroupLayout.PREFERRED_SIZE, 66, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, 1, Short.MAX_VALUE)))
-                        .addGap(12, 12, 12)))
-                .addContainerGap(75, Short.MAX_VALUE))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(jTextField3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(jScrollPane2)
+                            .addComponent(jTextField5))))
+                .addContainerGap(87, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -183,8 +158,7 @@ implements Addable, KeyListener{
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(jTextField2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jTextField3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(jTextField3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addGap(26, 26, 26)
                         .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 215, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -203,7 +177,6 @@ implements Addable, KeyListener{
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JTextArea jTextArea1;
     private javax.swing.JTextArea jTextArea2;
-    private javax.swing.JTextField jTextField1;
     private javax.swing.JTextField jTextField2;
     private javax.swing.JTextField jTextField3;
     private javax.swing.JTextField jTextField5;

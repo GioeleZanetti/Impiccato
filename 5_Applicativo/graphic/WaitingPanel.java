@@ -7,7 +7,6 @@
 
 package graphic;
 
-import application.MainFrame;
 import java.io.IOException;
 
 public class WaitingPanel extends javax.swing.JPanel 
@@ -27,11 +26,6 @@ implements Addable{
      * Il token della partita
      */
     private String gameToken;
-    
-    /**
-     * La lunghezza di un turno in secondi
-     */
-    private int lengthInSeconds;
     
     /**
      * Crea un nuovo WaitingPanel

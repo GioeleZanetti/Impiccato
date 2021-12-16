@@ -11,7 +11,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-public class App implements Playable{
+public class App {
     
     /**Il client che permette di scambiare informazioni con il server
      * 
@@ -60,14 +60,16 @@ public class App implements Playable{
         System.out.println(msg);
     }
     
-    public void play(){
-        boolean done = false;
+    /**Main
+     * 
+     * @param args eventuali parametri
+     */
+    public static void main(String[] args) {
         try{
             App a = new App();
             a.c.changeUsername(a.k);
-            while (!done) {
-                String line = a.k.readLine();
-                a.getClient().elaborateRequest(line);
+            while (true) {             
+                a.getClient().elaborateRequest(a.k.readLine());
             }
         }catch(IOException e){
             

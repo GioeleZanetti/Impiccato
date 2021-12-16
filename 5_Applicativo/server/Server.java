@@ -15,25 +15,10 @@ import java.util.concurrent.Executors;
 
 public class Server {
 
-    /**
-     * La porta in cui il server ascolta
-     */
     private static final int PORT = 3000;
-    
-    /**
-     * La lista di client
-     */
     private static List<ClientHandler> clients = new ArrayList<>();
-    
-    /**
-     * Il pool in cui vengono eseguiti i client
-     */
     private static ExecutorService pool = Executors.newFixedThreadPool(100);
     
-    /**
-     * Metodo main
-     * @param args evenutuali parametri da linea di comando 
-     */
     public static void main(String[] args) {       
         try {
             ServerSocket listener = new ServerSocket(PORT);
