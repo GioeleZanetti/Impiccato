@@ -47,6 +47,10 @@ implements Addable{
             this.frame.getClient().setGameName((String)o);
             this.frame.removePanel();
             this.frame.addPanel(new WaitingPanel(this.frame, (String)o));
+        }else if(parameter.equals("game full")){
+            jLabel1.setText("Game " + jTextField2.getText() + " is full!");
+        }else if(parameter.equals("username used")){
+            jLabel1.setText("Your username is already used in " + jTextField2.getText());
         }
     }
     
@@ -137,7 +141,6 @@ implements Addable{
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
         if(!jTextField1.getText().isBlank() && !jTextField1.getText().isEmpty()
         && !jTextField2.getText().isBlank() && !jTextField2.getText().isEmpty()){
-            
             try {
                 UsernameChecker.validateUsername(jTextField1.getText());
                 frame.setUsername(jTextField1.getText());

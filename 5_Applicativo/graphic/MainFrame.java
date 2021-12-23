@@ -4,20 +4,17 @@
  * @version 11.11.2021
  */
 
-package application;
+package graphic;
 
+import application.App;
 import client.Client;
-import graphic.Addable;
-import graphic.ErrorPanel;
-import graphic.MainPanel;
 import java.awt.BorderLayout;
 import static java.awt.BorderLayout.CENTER;
 import java.io.IOException;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
-public class MainFrame extends JFrame
-implements Playable{
+public class MainFrame extends JFrame{
     
     /**
      * Il client corrente
@@ -30,24 +27,18 @@ implements Playable{
     private Addable panel;
     
     /**
-     * Mostra se è avvenuto un errore durante la 
-     * connessione con il server
-     */
-    private boolean error;
-    
-    /**
      * Crea un nuovo MainFrame
      */
     public MainFrame() {
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setSize(400, 500);
-        //this.addPanel(new MainPanel(this));
+        this.addPanel(new MainPanel(this));
         this.setResizable(false);
         try {
-            System.out.println("Trying 127.0.0.1 on 3000...");
             c = new Client(this);
         } catch (IOException ex) {
-            this.error = true;
+            removePanel();
+            addPanel(new ErrorPanel());
         }
     }
 
@@ -96,34 +87,15 @@ implements Playable{
     }
 
     /**
-     * Imposta il client
-     * @param port la porta del server
-     * @param ip l'ip del server
+     * Main
+     * @param args aregomenti da linea di comando
      */
-    public void setClient(int port, String ip){
-        try {
-            System.out.printf("trying %s on %d...\n", ip, port);
-            c = new Client(this, null, port, ip);
-            removePanel();
-            addPanel(new MainPanel(this));
-        } catch (IOException ex) {
-            removePanel();
-            addPanel(new ErrorPanel(this));
-        }
-    }
-    
-    @Override
-    public void play(){
+    public static void main(String args[]) {
+        
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                MainFrame frame = new MainFrame();
-                frame.setVisible(true);
-                if(!error){
-                    frame.addPanel(new MainPanel(frame));
-                }else{
-                    frame.addPanel(new ErrorPanel(frame));
-                }
+                new MainFrame().setVisible(true);
             }
         });
-    }
+    }  
 }

@@ -5,6 +5,8 @@
 package server;
 
 import game.GameHoster;
+import game.Player;
+import game.UsernameChecker;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -42,6 +44,11 @@ public class ClientHandler implements Runnable {
     private String gameToken;
     
     /**
+     * L'username del giocatore
+     */
+    private String username;
+    
+    /**
      * Il timer che regola la durata dei turni
      */
     private Timer timer;
@@ -57,11 +64,20 @@ public class ClientHandler implements Runnable {
         this.client = client;
         this.clients = clients;
         gameToken = "";
+        username = "";
         this.timer = new Timer(0, action);
 
         out = new DataOutputStream(client.getOutputStream());
         in = new DataInputStream(client.getInputStream());
 
+    }
+    
+    /**
+     * Imposta tutti i client disponibili
+     * @param clients la lista di client
+     */
+    public void setClients(List<ClientHandler> clients){
+        this.clients = clients;
     }
 
     /**
@@ -80,6 +96,10 @@ public class ClientHandler implements Runnable {
         return gameToken;
     }
 
+    private void setUsername(String username){
+        this.username = username;
+    }
+    
     @Override
     public void run() {
         try {
@@ -99,6 +119,20 @@ public class ClientHandler implements Runnable {
         } catch (IOException ex) {
             try {
                 in.close();
+                clients.remove(this);
+                this.clients = Server.getClients();
+                var game = GameHoster.getGame(gameToken);
+                if(game != null){
+                    if(game.getAdmin().equals(username)){
+                        game.removePlayer(username);
+                        broadcastToGame(gameToken, ProtocolCodes.buildAdminLeftGamePacket());
+                        GameHoster.removeGame(gameToken);
+                        System.out.println("Removing " + gameToken);
+                    }else{
+                        game.removePlayer(username);
+                        broadcastToGame(gameToken, ProtocolCodes.buildPlayerLeftGamePacket(username));
+                    }
+                }
             } catch (IOException ioe) {
 
             }
@@ -173,7 +207,9 @@ public class ClientHandler implements Runnable {
     ActionListener action = new ActionListener() {
         public void actionPerformed(ActionEvent evt) {
             try {
-                byte[] packet = ProtocolCodes.removeLengthFromPacket(ProtocolCodes.buildForceTurnEndPacket(getGameToken()));
+                byte[] packet = ProtocolCodes.removeLengthFromPacket(
+                    ProtocolCodes.buildForceTurnEndPacket(getGameToken())
+                );
                 elaborateRequest(packet);
             } catch (IOException ioe) {
 
@@ -296,9 +332,11 @@ public class ClientHandler implements Runnable {
         String requestGameToken = new String(ProtocolCodes.readFromTo(ProtocolCodes.getDataFromPacket(request), 0, 8));
         var game = GameHoster.getGame(requestGameToken);
         if (game != null) {
-            byte letter = ProtocolCodes.readFromTo(ProtocolCodes.getDataFromPacket(request), 8, request.length - 1)[0];
+            byte letter = ProtocolCodes.readFromTo(ProtocolCodes.getDataFromPacket(request), 8, 9)[0];
+            String username = new String(ProtocolCodes.readFromTo(ProtocolCodes.getDataFromPacket(request), 9, request.length - 1));
             byte[] index = game.isLetterRight(letter);
             out.write(ProtocolCodes.buildLetterIndexesPacket(index, letter));
+            broadcastToGame(requestGameToken, ProtocolCodes.buildLetterSentPacket(username, letter));
         }
     }
 
@@ -335,13 +373,16 @@ public class ClientHandler implements Runnable {
                 game.removePlayer(username);
                 out.write(ProtocolCodes.buildGameLeavedSuccessfullyPacket());
                 broadcastToGame(requestGameToken, ProtocolCodes.buildPlayerLeftGamePacket(username));
-                
+                if(game.getPlayerList().size() == 0){
+                    deleteGame(ProtocolCodes.removeLengthFromPacket(ProtocolCodes.buildDeleteGamePacket(requestGameToken)));
+                }
             }else{
                 broadcastToGame(requestGameToken, ProtocolCodes.buildAdminLeftGamePacket());
                 GameHoster.removeGame(requestGameToken);
                 System.out.println("Removing " + requestGameToken);
             }
             System.out.println("Player " + username + " left game " + requestGameToken);
+            
         } else {
             out.write(ProtocolCodes.buildGameLeavedUnsuccessfullyPacket());
         }
@@ -371,11 +412,16 @@ public class ClientHandler implements Runnable {
         var game = GameHoster.getGame(requestGameToken);
         if (game != null) {
             if (!game.containsName(userName)) {
-                setGameToken(requestGameToken);
-                game.addPlayer(userName);
-                System.out.printf("Player %s joined game %s\n", userName, requestGameToken);
-                out.write(ProtocolCodes.buildGameJoinedSuccessfullyPacket(requestGameToken, GameHoster.getGame(requestGameToken).getLengthInSeconds()));
-                broadcastToGame(requestGameToken, ProtocolCodes.buildPlayerJoinedGamePacket(userName));
+                if(!game.isFull()){
+                    setGameToken(requestGameToken);
+                    setUsername(userName);
+                    game.addPlayer(userName);
+                    System.out.printf("Player %s joined game %s\n", userName, requestGameToken);
+                    out.write(ProtocolCodes.buildGameJoinedSuccessfullyPacket(requestGameToken, GameHoster.getGame(requestGameToken).getLengthInSeconds()));
+                    broadcastToGame(requestGameToken, ProtocolCodes.buildPlayerJoinedGamePacket(userName));
+                }else{
+                    out.write(ProtocolCodes.buildGameFullPacket());
+                }
             } else {
                 out.write(ProtocolCodes.buildUsernameAlreadyUsedPacket());
             }
@@ -391,16 +437,17 @@ public class ClientHandler implements Runnable {
      * non va a buon fine
      */
     private void createGame(byte[] request) throws IOException {
-        String requestGameToken = GameHoster.generateRandomGameName();
+        String newGameToken = GameHoster.generateRandomGameName();
         int turns = ProtocolCodes.readFromTo(ProtocolCodes.getDataFromPacket(request), 0, 1)[0];
         int length = ProtocolCodes.readFromTo(ProtocolCodes.getDataFromPacket(request), 1, 2)[0];
         String userName = new String(ProtocolCodes.readFromTo(ProtocolCodes.getDataFromPacket(request), 2, request.length - 1));
-        GameHoster.addGame(requestGameToken, turns, length);
-        GameHoster.getGame(requestGameToken).addPlayer(userName);
-        GameHoster.getGame(requestGameToken).setAdmin(userName);
-        setGameToken(requestGameToken);
-        out.write(ProtocolCodes.buildGameCreatedSuccessfullyPacket(requestGameToken, GameHoster.getGame(requestGameToken).getLengthInSeconds()));
-        System.out.printf("Creating %s, %d turns, %d length\n", requestGameToken, turns, length);
+        GameHoster.addGame(newGameToken, turns, length);
+        GameHoster.getGame(newGameToken).addPlayer(userName);
+        GameHoster.getGame(newGameToken).setAdmin(userName);
+        setGameToken(newGameToken);
+        setUsername(userName);
+        out.write(ProtocolCodes.buildGameCreatedSuccessfullyPacket(newGameToken, GameHoster.getGame(newGameToken).getLengthInSeconds()));
+        System.out.printf("Creating %s, %d turns, %d length\n", newGameToken, turns, length);
     }
 
     /**
@@ -413,9 +460,11 @@ public class ClientHandler implements Runnable {
      */
     private void broadcastToGame(String gameToken, byte[] packet) throws IOException {
         for (ClientHandler c : clients) {
-            if (c.getGameToken().equals(gameToken)) {
-                c.out.write(ProtocolCodes.buildBroadcastMessagePacket(packet));
-            }
+            try{
+                if (c.getGameToken().equals(gameToken)) {
+                    c.out.write(packet);
+                }
+            }catch(NullPointerException npe){}
         }
     }
 }

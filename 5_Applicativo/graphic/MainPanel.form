@@ -22,10 +22,8 @@
                       <EmptySpace min="-2" pref="124" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" max="-2" attributes="0">
                           <Component id="jTextField1" pref="142" max="32767" attributes="0"/>
-                          <Group type="103" groupAlignment="1" max="-2" attributes="0">
-                              <Component id="jButton2" alignment="0" pref="0" max="32767" attributes="0"/>
-                              <Component id="jButton1" alignment="0" pref="142" max="32767" attributes="0"/>
-                          </Group>
+                          <Component id="jButton2" alignment="0" pref="0" max="32767" attributes="0"/>
+                          <Component id="jButton1" alignment="0" pref="142" max="32767" attributes="0"/>
                       </Group>
                       <EmptySpace min="-2" pref="14" max="-2" attributes="0"/>
                       <Component id="jTextField2" min="-2" pref="92" max="-2" attributes="0"/>

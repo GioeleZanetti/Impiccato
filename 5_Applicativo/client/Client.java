@@ -264,7 +264,7 @@ public class Client {
      * Metodo che permette di gestire le richieste del client
      * @param msg la richiesta
      * @param parameters eventuali parametri
-     * @throws IOException eccezione sollevata se socket non disponibile
+     * @throws IOException eccezione sollevata se socket non disponibile 
      */
     public void elaborateRequest(String msg, Object[] parameters) throws IOException {
         if (!hasStarted) {
@@ -291,9 +291,13 @@ public class Client {
             sendLetter(msg);
         } else {
             if(!isGraphic){
-                a.writeOnConsole("You have to wait until the end of the turn to play again!");
+                a.writeOnConsole(
+                    "You have to wait until the end of the turn to play again!"
+                );
             }else{
-                this.frame.getCurrentPanel().setData("You have to wait until the end of the turn to play again!", "error");
+                this.frame.getCurrentPanel().setData(
+                    "You have to wait until the end of the turn to play again!", "error"
+                );
             }
         }
     }
@@ -315,7 +319,7 @@ public class Client {
      */
     private void sendLetter(String msg) throws IOException {
         if (!msg.trim().isEmpty()) {
-            write(ProtocolCodes.buildSendLetterPacket(gameName, msg.charAt(0)));
+            write(ProtocolCodes.buildSendLetterPacket(gameName, userName, msg.charAt(0)));
         }
     }
 
@@ -511,6 +515,12 @@ public class Client {
             case ProtocolCodes.ADMIN_LEFT_GAME:
                 adminLeftGame();
                 break;
+            case ProtocolCodes.GAME_FULL:
+                gameFull();
+                break;
+            case ProtocolCodes.LETTER_SENT:
+                letterSent(response);
+                break;
             default:
                 break;
         }
@@ -668,7 +678,6 @@ public class Client {
         }else{
             this.frame.getCurrentPanel().setData(new String(players), "playerList");
         }
-        
         if (hasFinished) {
             setHasStarted(false);
         }
@@ -681,6 +690,8 @@ public class Client {
     private void usernameAlreadyUsed() {
         if(!isGraphic){
             a.writeOnConsole("Your username is already used in the game that you are trying to join in, please change it!");
+        }else{
+            frame.getCurrentPanel().setData(true, "username used");
         }
     }
 
@@ -751,6 +762,7 @@ public class Client {
     private void adminLeftGame() throws IOException{
         gameName = null;
         hasFinished = true;
+        hasStarted = false;
         if(!isGraphic){
             a.writeOnConsole("Admin left the game, please leave the game!");
         }else{
@@ -795,6 +807,25 @@ public class Client {
             a.writeOnConsole("The word was " + this.word + "!");
         }else{
             frame.getCurrentPanel().setData(this.word, "word");
+        }
+    }
+    
+    private void gameFull(){
+        if(!isGraphic){
+            a.writeOnConsole("Game full!");
+        }else{
+            frame.getCurrentPanel().setData(true, "game full");
+        }
+    }
+    
+    private void letterSent(byte[] response){
+        response = ProtocolCodes.removeLengthFromPacket(response);
+        String player = new String(ProtocolCodes.readFromTo(response, 1, response.length));
+        char letter = (char)ProtocolCodes.readFromTo(response, 0, 1)[0];
+        if(!isGraphic){
+            a.writeOnConsole(player + ": " + letter);
+        }else{
+            frame.getCurrentPanel().setData(player + ": " + letter, "letter");
         }
     }
 

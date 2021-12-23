@@ -44,4 +44,21 @@ public class Server implements Runnable{
         }
     }
     
+    /**
+     * Rimuove un client dalla lista
+     * @param c il client da eliminare
+     */
+    public static void removeFromClients(ClientHandler c){
+        while(clients.indexOf(c) != -1){
+            clients.remove(c);
+        }
+    }
+    
+    /**
+     * Ritorna la lista dei client
+     * @return la lista dei client
+     */
+    public static List<ClientHandler> getClients(){
+        return clients;
+    }
 }

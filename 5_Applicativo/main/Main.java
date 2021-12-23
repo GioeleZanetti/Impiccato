@@ -54,53 +54,34 @@ public class Main {
         Scanner s = new Scanner(System.in);
         
         boolean done = false;
-        boolean serverStarted = false;
         
         System.out.println("Write \"Server\" to start server \n"
                 + "Write \"Client\" to choose interface");
         System.out.print(">");
         while(!done){
-            String cmd = "";
-            if(!serverStarted){
-                cmd = s.nextLine();
-            }
-            if(cmd.equals("Client") || serverStarted){
+            String cmd = s.nextLine();
+            if(cmd.equals("Client")){
                 System.out.println("Write \"GUI\" to play on GUI \n"
                     + "Write \"CLI\" to play on CLI");
                 System.out.print(">");
                 cmd = s.nextLine();
                 if(cmd.equals("GUI")){
                     m.setApplication(new MainFrame());
+                    m.play();
                     done = true;
                 }else if(cmd.equals("CLI")){
                     m.setApplication(new App());
+                    m.play();
                     done = true;
                 }
-            }else if(cmd.equals("Server") && !serverStarted){
+            }else if(cmd.equals("Server")){
                 (new Thread(new Server())).start();
-                serverStarted = true;
-                System.out.println("Write \"Yes\" to choose interface \n"
-                    + "Write \"No\" to only start server");
-                System.out.print(">");
-                cmd = s.nextLine();
-                if(cmd.equals("No")){
-                    done = true;
-                }
+                System.out.println("Server started");
+                System.out.println("Close this window to stop server");
+                done = true;
+            }else{
+                System.out.println("Unknown command, please try again");
             }
         }
-        if(m.hasApplication()){
-            m.play();
-        }else{
-            System.out.println("Write \"Quit\" to quit");
-            while(true){
-                String cmd = s.nextLine();
-                if(cmd.equals("Quit")){
-                    System.exit(0);
-                }
-            }
-        }
-        
-        
-    }
-    
+    }  
 }

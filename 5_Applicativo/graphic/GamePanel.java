@@ -85,31 +85,50 @@ implements Addable, KeyListener{
     };
     
     public void setData(Object o, String parameter) {
-        if(parameter.equals("end game")){
-            timer.stop();
-            frame.removePanel();
-            frame.addPanel(new FinalPanel(this.frame));
-        }else if(parameter.equals("masked word")){
-            this.word = (String)o;
-            jTextField2.setText((String)o);
-        }else if(parameter.equals("playerList")){
-            this.playerList = (String)o;
-            jList1.setListData(((String)o).split("\n"));
-        }else if(parameter.equals("error")){
-            jLabel1.setText((String)o);
-        }else if(parameter.equals("word")){
-            jTextArea2.append("The word was " + (String)o + "!\n");
-        }else if(parameter.equals("end turn")){
-            timer.stop();
-            this.errors = 0;
-            this.timePassed = 0;
-            jTextField1.setText("0");
-            timer.start();
-        }else if(parameter.equals("errors")){
-            this.errors = (int)o;
-            jTextField1.setText(Integer.toString(errors));
-        }else if(parameter.equals("message")){
-            jTextArea2.append((String)o + "\n");
+        switch (parameter) {
+            case "end game":
+                timer.stop();
+                frame.removePanel();
+                frame.addPanel(new FinalPanel(this.frame));
+                break;
+            case "masked word":
+                this.word = (String)o;
+                jTextField2.setText((String)o);
+                break;
+            case "playerList":
+                this.playerList = (String)o;
+                jList1.setListData(((String)o).split("\n"));
+                break;
+            case "error":
+                jLabel1.setText((String)o);
+                break;
+            case "word":
+                jTextArea2.append("The word was " + (String)o + "!\n");
+                break;
+            case "end turn":
+                timer.stop();
+                this.errors = 0;
+                this.timePassed = 0;
+                jTextField1.setText("0");
+                timer.start();
+                break;
+            case "errors":
+                this.errors = (int)o;
+                jTextField1.setText(Integer.toString(errors));
+                break;
+            case "message":
+                jTextArea2.append((String)o + "\n");
+                break;
+            case "letter":
+                jTextArea2.append((String)o + "\n");
+                break;
+            case "adminLeft":
+                timer.stop();
+                frame.removePanel();
+                frame.addPanel(new MainPanel(this.frame));
+                break;
+            default:
+                break;
         }
     }
 

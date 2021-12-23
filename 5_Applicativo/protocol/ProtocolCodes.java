@@ -185,6 +185,16 @@ public class ProtocolCodes {
     public static final int GET_LEADERBOARD = 41;
     
     /**
+     * Codice per dire che una partita è piena
+     */
+    public static final int GAME_FULL = 42;
+    
+    /**
+     * Codice per indicare che un giocatore ha inviato una lettera
+     */
+    public static final int LETTER_SENT = 43;
+    
+    /**
      * Ritorna la parte di dati di un pacchetto, 
      * tralasciando il codice identificativo
      * @param packet il pacchetto da cui prendere i dati
@@ -440,13 +450,14 @@ public class ProtocolCodes {
      * @param c il carattere inviato
      * @return il pacchetto completo
      */
-    public static byte[] buildSendLetterPacket(String gameName, char c){
+    public static byte[] buildSendLetterPacket(String gameName, String username, char c){
         byte[] packet = new byte[2];
         packet[0] = (byte)(packet.length - 1);
         packet[1] = SEND_LETTER;
         byte[] letter = {(byte)c};
         packet = addDataToPacket(packet, gameName.getBytes());
         packet = addDataToPacket(packet, letter);
+        packet = addDataToPacket(packet, username.getBytes());
         return packet;
     }
     
@@ -674,6 +685,35 @@ public class ProtocolCodes {
         packet = addDataToPacket(packet, gameToken.getBytes());
         return packet;
     }
+        
+    /**
+     * Metodo utile a creare un pacchetto
+     * che dice che la partita a cui ci si 
+     * vuole unire è piena
+     * @return il pacchetto completo
+     */
+    public static byte[] buildGameFullPacket() {
+        byte[] packet = new byte[2];
+        packet[0] = (byte)(packet.length - 1);
+        packet[1] = GAME_FULL;
+        return packet;
+    }
+    
+    /**
+     * Metodo che crea un pacchetto per
+     * dire che un giocatore ha scritto 
+     * una certa lettera
+     * @return il pacchetto completo
+     */
+    public static byte[] buildLetterSentPacket(String username, byte letter){
+        byte[] packet = new byte[2];
+        byte[] data = {letter};
+        packet[0] = (byte)(packet.length - 1);
+        packet[1] = LETTER_SENT;
+        packet = addDataToPacket(packet, data);
+        packet = addDataToPacket(packet, username.getBytes());
+        return packet;
+    }
     
     /**
      * Rimuove il numero di byte da leggere in un pacchetto
@@ -715,5 +755,10 @@ public class ProtocolCodes {
         }
         return data;
     }
+
     
+    public static void main(String[] args) {
+        byte[] a = buildLetterSentPacket("aaa", (byte)99);
+        printPacket(a);
+    }
 }

@@ -6,6 +6,7 @@
 package game;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class Game {
     
@@ -17,7 +18,7 @@ public class Game {
     /**
      * La lista dei giocatori
      */
-    private ArrayList<Player> players;
+    private List<Player> players;
     
     /**
      * Indica se la partita è cominciata
@@ -86,6 +87,14 @@ public class Game {
         else if(turns > 10)
             turns = 10;
         this.TURN_NUMBER = turns;
+    }
+    
+    /**
+     * Ritorna la lista dei giocatori
+     * @return la lista dei giocatori
+     */
+    public List<Player> getPlayerList(){
+        return players;
     }
     
     /**
@@ -301,6 +310,7 @@ public class Game {
      * dell'oggetto corrente
      * @return una rappresentazione sotto forma di stringa
      */
+    @Override
     public String toString(){
         String ris = name + ":\n";
         for(Player p : players){
@@ -316,10 +326,12 @@ public class Game {
      */
     public String getPlayers(){
         String ris = "";
-        for(int i=0;i<players.size() - 1;i++){
-            ris += players.get(i) + "\n";
+        if(players.size() != 0){
+            for(int i=0;i<players.size() - 1;i++){
+                ris += players.get(i) + "\n";
+            }
+            ris += players.get(players.size() - 1).toString();
         }
-        ris += players.get(players.size() - 1).toString();
         return ris;
     }
     
@@ -328,7 +340,7 @@ public class Game {
      * @return la classifica ordinata dei giocatori
      */
     public String getLeaderboard(){
-        ArrayList<Player> leaderboard = getOrderedPlayerList();
+        List<Player> leaderboard = getOrderedPlayerList();
         String ris = "";
         for(int i=0;i<leaderboard.size() - 1;i++){
             ris += leaderboard.get(i) + "\n";
@@ -341,8 +353,9 @@ public class Game {
      * Ordina la lista dei giocatori
      * @return la lista dei giocatori ordinata
      */
-    public ArrayList<Player> getOrderedPlayerList(){
-        ArrayList<Player> playersCopy = (ArrayList<Player>)players.clone();
+    public List<Player> getOrderedPlayerList(){
+        List<Player> playersCopy = new ArrayList<>();
+        playersCopy.addAll(players);
         int n = playersCopy.size();
         for (int i = 0; i < n-1; i++){
             for (int j = 0; j < n-i-1; j++){
@@ -355,5 +368,14 @@ public class Game {
             }
         }
         return playersCopy;
+    }
+
+    /**
+     * Metodo che ritorna se una partita è piena
+     * (massimo 10 giocatori)
+     * @return se la partita è piena
+     */
+    public boolean isFull() {
+        return players.size() >= 10;
     }
 }
